@@ -1,0 +1,19 @@
+{
+  "name": "Shadow Coin",
+  "short_name": "SDC",
+  "description": "Shadow Coin (SDC) — the ultimate in-browser crypto wallet game with XP, spins, missions, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d18",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "finance", "entertainment"]
+}
