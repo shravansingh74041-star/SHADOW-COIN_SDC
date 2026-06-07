@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Coin (SDC)</title>
+  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    .hidden { display: none !important; }
+    :root {
+      --purple: #7c3aed; --purple-light: #a78bfa; --indigo: #4f46e5;
+      --gold: #c8a03c; --red: #e05555; --green: #22c55e; --amber: #f59e0b;
+      --bg: #0a0a0f; --card: #12121a; --border: #1e1e2e; --border2: #2a2a3a;
+      --text: #e0e0e0; --muted: #555;
+    }
+    body { min-height:100vh; background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; display:flex; justify-content:center; padding:28px 16px 72px; transition:background 0.5s; }
+    .wrapper { display:flex; flex-direction:column; gap:14px; width:100%; max-width:440px; }
+    .card    { background:var(--card); border:1px solid var(--border2); border-radius:20px; padding:32px 36px; box-shadow:0 0 48px rgba(120,80,255,0.10); transition:background 0.5s; }
+    .card-sm { background:var(--card); border:1px solid var(--border2); border-radius:16px; padding:18px 22px; transition:background 0.5s; }
+    .section-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.13em; color:var(--muted); margin-bottom:14px; }
+
+    /* ── GOOGLE AUTH ── */
+    .gauth-setup { display:flex; flex-direction:column; gap:10px; }
+    .gauth-hint { font-size:0.78rem; color:#888; line-height:1.55; }
+    .gauth-hint a { color:var(--purple-light); text-decoration:none; }
+    .gauth-input-row { display:flex; gap:8px; }
+    .gauth-input { flex:1; background:var(--border); border:1px solid var(--border2); border-radius:10px; padding:9px 14px; color:#fff; font-size:0.8rem; outline:none; transition:border-color 0.15s; font-family:monospace; }
+    .gauth-input:focus { border-color:var(--purple); }
+    .gauth-input::placeholder { color:var(--muted); font-family:inherit; }
+    .btn-gauth-save { background:linear-gradient(135deg,var(--purple),var(--indigo)); border:none; border-radius:10px; color:#fff; font-size:0.78rem; font-weight:700; padding:9px 14px; cursor:pointer; white-space:nowrap; }
+    .gauth-profile { display:flex; align-items:center; gap:14px; }
+    .gauth-avatar { width:48px; height:48px; border-radius:50%; border:2px solid var(--purple); object-fit:cover; flex-shrink:0; }
+    .gauth-avatar-fallback { width:48px; height:48px; border-radius:50%; border:2px solid var(--purple); background:linear-gradient(135deg,var(--purple),var(--indigo)); display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:800; color:#fff; flex-shrink:0; }
+    .gauth-info { flex:1; }
+    .gauth-name { font-size:1rem; font-weight:700; color:#fff; }
+    .gauth-email { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+    .gauth-verified { display:inline-flex; align-items:center; gap:4px; font-size:0.65rem; font-weight:700; color:var(--green); background:#062010; border:1px solid var(--green); border-radius:99px; padding:2px 8px; margin-top:4px; }
+    .btn-gauth-out { background:none; border:1px solid var(--border2); border-radius:8px; color:var(--muted); font-size:0.7rem; font-weight:700; padding:6px 12px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+    .btn-gauth-out:hover { color:var(--red); border-color:var(--red); }
+    .gauth-gcid-clear { font-size:0.65rem; color:var(--muted); cursor:pointer; text-align:center; margin-top:4px; transition:color 0.15s; }
+    .gauth-gcid-clear:hover { color:var(--red); }
+    .gauth-signin-btn-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; padding:8px 0; }
+    .gauth-waiting { font-size:0.75rem; color:var(--muted); }
+
+    /* ── PLAYER ── */
+    .player-row { display:flex; align-items:center; gap:10px; }
+    .player-avatar { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--indigo)); display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:800; color:#fff; flex-shrink:0; overflow:hidden; }
+    .player-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .player-info { flex:1; }
+    .player-greeting { font-size:0.68rem; color:var(--muted); }
+    .player-display-name { font-size:1rem; font-weight:700; color:#fff; margin-top:1px; }
+    .player-input-wrap { display:flex; gap:8px; margin-top:12px; }
+    .player-input { flex:1; background:var(--border); border:1px solid var(--border2); border-radius:10px; padding:9px 14px; color:#fff; font-size:0.86rem; outline:none; transition:border-color 0.15s; }
+    .player-input:focus { border-color:var(--purple); }
+    .player-input::placeholder { color:var(--muted); }
+    .btn-save-name { background:linear-gradient(135deg,var(--purple),var(--indigo)); border:none; border-radius:10px; color:#fff; font-size:0.8rem; font-weight:700; padding:9px 14px; cursor:pointer; white-space:nowrap; transition:transform 0.1s; }
+    .btn-save-name:active { transform:scale(0.96); }
+
+    /* ── REFERRAL ── */
+    .referral-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .referral-box { background:#0e0e18; border:1px solid var(--border2); border-radius:12px; padding:12px 14px; }
+    .referral-box-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:6px; }
+    .referral-code-display { font-size:1rem; font-weight:800; color:var(--gold); letter-spacing:0.08em; margin-bottom:6px; font-family:monospace; }
+    .btn-copy { background:var(--border2); border:none; border-radius:8px; color:#ccc; font-size:0.7rem; font-weight:700; padding:5px 10px; cursor:pointer; transition:all 0.15s; width:100%; }
+    .btn-copy:hover { background:var(--purple); color:#fff; }
+    .referral-input-area { display:flex; flex-direction:column; gap:6px; }
+    .referral-input { background:var(--border); border:1px solid var(--border2); border-radius:8px; padding:7px 10px; color:#fff; font-size:0.82rem; outline:none; font-family:monospace; transition:border-color 0.15s; text-transform:uppercase; }
+    .referral-input:focus { border-color:var(--gold); }
+    .referral-input::placeholder { color:var(--muted); text-transform:none; }
+    .btn-redeem { background:linear-gradient(135deg,#92400e,var(--amber)); border:none; border-radius:8px; color:#000; font-size:0.78rem; font-weight:800; padding:7px 10px; cursor:pointer; transition:transform 0.1s; }
+    .btn-redeem:active { transform:scale(0.96); }
+    .referral-msg { font-size:0.72rem; min-height:16px; margin-top:8px; }
+
+    /* ── YOUTUBE ── */
+    .yt-card { display:flex; align-items:center; gap:14px; }
+    .yt-logo { width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#ff0000,#cc0000); display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
+    .yt-info { flex:1; }
+    .yt-channel { font-size:0.96rem; font-weight:800; color:#fff; }
+    .yt-sub-line { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+    .yt-bonus-pill { display:inline-block; background:linear-gradient(135deg,#ff0000,#e55); color:#fff; font-size:0.7rem; font-weight:800; padding:3px 10px; border-radius:99px; margin-top:4px; letter-spacing:0.04em; }
+    .yt-claim-area { margin-top:14px; }
+    .yt-check-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .yt-check-row input[type=checkbox] { width:18px; height:18px; accent-color:#ff0000; cursor:pointer; flex-shrink:0; }
+    .yt-check-label { font-size:0.82rem; color:#ccc; cursor:pointer; }
+    .btn-yt-claim { width:100%; background:linear-gradient(135deg,#cc0000,#ff4444); border:none; border-radius:12px; color:#fff; font-size:0.9rem; font-weight:800; padding:12px 0; cursor:pointer; transition:transform 0.1s,box-shadow 0.15s; letter-spacing:0.03em; }
+    .btn-yt-claim:hover:not(:disabled) { box-shadow:0 6px 24px rgba(255,0,0,0.45); }
+    .btn-yt-claim:active:not(:disabled) { transform:scale(0.97); }
+    .btn-yt-claim:disabled { background:#2a1a1a; color:#664444; cursor:not-allowed; }
+    .yt-link { display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; color:#ff6666; text-decoration:none; margin-top:8px; }
+    .yt-link:hover { color:#ff9999; }
+    .yt-claimed-badge { display:flex; align-items:center; gap:8px; background:#0a200a; border:1px solid var(--green); border-radius:10px; padding:10px 14px; margin-top:10px; }
+    .yt-claimed-badge span { font-size:0.82rem; color:var(--green); font-weight:700; }
+
+    /* ── MISSIONS ── */
+    .missions-tabs { display:flex; gap:6px; margin-bottom:14px; }
+    .mission-tab { flex:1; background:var(--border); border:1px solid var(--border2); border-radius:10px; color:var(--muted); font-size:0.75rem; font-weight:700; padding:7px 0; cursor:pointer; text-align:center; transition:all 0.15s; }
+    .mission-tab.active { background:var(--purple); border-color:var(--purple); color:#fff; }
+    .mission-panel { display:none; }
+    .mission-panel.active { display:flex; flex-direction:column; gap:8px; }
+    .mission-item { background:#0e0e18; border:1px solid var(--border2); border-radius:13px; padding:12px 14px; display:flex; align-items:center; gap:12px; transition:border-color 0.2s; }
+    .mission-item.done { border-color:var(--green); background:#071207; }
+    .mission-item.claimable { border-color:var(--gold); background:#1a1200; animation:pulse-mission 1.8s infinite; }
+    @keyframes pulse-mission { 0%,100%{box-shadow:0 0 0 rgba(200,160,60,0)} 50%{box-shadow:0 0 14px rgba(200,160,60,0.3)} }
+    .mission-icon { font-size:1.4rem; flex-shrink:0; width:34px; text-align:center; }
+    .mission-body { flex:1; min-width:0; }
+    .mission-name { font-size:0.84rem; font-weight:700; color:#ddd; }
+    .mission-item.done .mission-name { color:var(--green); }
+    .mission-desc { font-size:0.68rem; color:var(--muted); margin:2px 0 6px; }
+    .mission-bar-wrap { background:var(--border); border-radius:99px; height:5px; overflow:hidden; }
+    .mission-bar { height:100%; background:linear-gradient(90deg,var(--purple),var(--purple-light)); border-radius:99px; transition:width 0.4s; }
+    .mission-item.done .mission-bar { background:linear-gradient(90deg,#16a34a,var(--green)); }
+    .mission-progress { font-size:0.62rem; color:var(--muted); margin-top:3px; }
+    .btn-claim-mission { background:linear-gradient(135deg,#92400e,var(--amber)); border:none; border-radius:8px; color:#000; font-size:0.72rem; font-weight:800; padding:7px 12px; cursor:pointer; flex-shrink:0; transition:transform 0.1s; white-space:nowrap; }
+    .btn-claim-mission:active { transform:scale(0.95); }
+    .mission-claimed-badge { font-size:0.75rem; font-weight:700; color:var(--green); flex-shrink:0; display:flex; align-items:center; gap:4px; }
+    .mission-reward-pill { display:inline-flex; align-items:center; gap:3px; background:#1a0e2e; border:1px solid #3a1e6a; border-radius:6px; padding:2px 7px; font-size:0.6rem; font-weight:700; color:var(--purple-light); }
+    .missions-reset-note { font-size:0.65rem; color:var(--muted); text-align:center; margin-top:4px; }
+
+    /* ── WALLET ── */
+    .wallet-top { text-align:center; }
+    .coin-icon { font-size:54px; filter:drop-shadow(0 0 16px rgba(200,160,60,0.75)); display:block; margin-bottom:8px; user-select:none; }
+    .sdc-logo-wrap { position:relative; width:96px; margin:0 auto 12px; }
+    .sdc-logo { width:96px; height:96px; border-radius:50%; object-fit:cover; display:block; filter:drop-shadow(0 0 22px rgba(30,120,255,0.55)); }
+    .coin-icon-badge { position:absolute; bottom:-4px; right:-4px; font-size:26px; line-height:1; background:var(--card); border-radius:50%; padding:2px; border:2px solid var(--border2); display:none; }
+    .coin-icon-badge.active { display:block; }
+    .wallet-name { font-size:1.4rem; font-weight:800; color:var(--gold); letter-spacing:0.04em; }
+    .wallet-ticker { font-size:0.78rem; color:var(--muted); letter-spacing:0.14em; margin:2px 0 10px; }
+    /* ── PRICE TICKER ── */
+    .price-ticker-wrap { background:#0a0a12; border:1px solid var(--border2); border-radius:14px; padding:12px 16px; margin-bottom:18px; display:flex; flex-direction:column; gap:8px; }
+    .price-ticker-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .price-main { display:flex; align-items:baseline; gap:6px; }
+    .price-value { font-size:1.45rem; font-weight:900; color:#fff; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+    .price-change { font-size:0.78rem; font-weight:800; padding:3px 8px; border-radius:6px; }
+    .price-change.up   { color:#22c55e; background:#062010; }
+    .price-change.down { color:#e05555; background:#200a0a; }
+    .price-arrow { font-size:0.9rem; }
+    .sparkline-wrap { flex-shrink:0; }
+    #sparkline-canvas { display:block; }
+    .price-ticker-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; border-top:1px solid var(--border2); padding-top:8px; }
+    .price-stat-item { text-align:center; }
+    .price-stat-lbl { font-size:0.57rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
+    .price-stat-val { font-size:0.72rem; font-weight:700; color:#bbb; margin-top:1px; font-variant-numeric:tabular-nums; }
+    .price-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px rgba(34,197,94,0.7); animation:blink-dot 1.4s infinite; margin-right:4px; vertical-align:middle; }
+    @keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .price-ticker-label { font-size:0.62rem; color:var(--muted); display:flex; align-items:center; }
+    .level-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; }
+    .level-badge { background:linear-gradient(135deg,var(--purple),var(--indigo)); color:#fff; font-size:0.68rem; font-weight:700; letter-spacing:0.07em; padding:4px 12px; border-radius:99px; text-transform:uppercase; }
+    .level-name { font-size:0.78rem; color:var(--purple-light); font-weight:600; }
+    .xp-bar-wrap { background:var(--border); border-radius:99px; height:7px; margin-bottom:4px; overflow:hidden; }
+    .xp-bar { height:100%; background:linear-gradient(90deg,var(--purple),var(--purple-light)); border-radius:99px; transition:width 0.55s cubic-bezier(.4,0,.2,1); }
+    .xp-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .xp-label { font-size:0.66rem; color:var(--muted); }
+    .xp-next-perk { font-size:0.66rem; color:var(--amber); font-weight:600; }
+    .balance-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.13em; color:var(--muted); margin-bottom:5px; }
+    .balance { font-size:4rem; font-weight:900; color:#fff; letter-spacing:-0.03em; line-height:1; margin-bottom:4px; display:inline-block; }
+    .balance.bump     { animation:bumpUp   0.28s ease; }
+    .balance.bump-red { animation:bumpDown 0.28s ease; }
+    @keyframes bumpUp   { 0%{transform:scale(1)} 40%{transform:scale(1.12);color:var(--purple-light)} 100%{transform:scale(1);color:#fff} }
+    @keyframes bumpDown { 0%{transform:scale(1)} 40%{transform:scale(0.92);color:var(--red)}          100%{transform:scale(1);color:#fff} }
+    .balance-sdc { font-size:0.83rem; color:var(--gold); font-weight:700; letter-spacing:0.05em; margin-bottom:26px; }
+    .btn-row { display:flex; gap:10px; margin-bottom:10px; }
+    .btn { flex:1; padding:13px 0; border:none; border-radius:12px; font-size:0.93rem; font-weight:700; cursor:pointer; transition:transform 0.1s,box-shadow 0.15s; letter-spacing:0.03em; }
+    .btn:active { transform:scale(0.95); }
+    .btn-earn { background:linear-gradient(135deg,var(--purple),var(--indigo)); color:#fff; box-shadow:0 4px 20px rgba(124,58,237,0.4); }
+    .btn-earn.boosted { background:linear-gradient(135deg,var(--amber),#ef4444); box-shadow:0 4px 20px rgba(245,158,11,0.5); animation:pulse-earn 1s infinite; }
+    @keyframes pulse-earn { 0%,100%{box-shadow:0 4px 20px rgba(245,158,11,0.4)} 50%{box-shadow:0 8px 36px rgba(245,158,11,0.8)} }
+    .btn-spend { background:var(--border); color:#999; border:1px solid var(--border2); }
+    .btn-spend:hover { background:#1e1e2e; color:#ccc; }
+    .btn-boost { width:100%; padding:10px 0; border-radius:12px; font-size:0.86rem; font-weight:700; border:1px solid var(--border2); background:#0e0e18; color:var(--amber); cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .btn-boost:hover:not(:disabled) { background:#18180a; border-color:var(--amber); }
+    .btn-boost:disabled { color:var(--muted); cursor:not-allowed; border-color:var(--border); }
+    .toast { font-size:0.8rem; min-height:18px; text-align:center; margin-top:10px; }
+
+    /* ── STATS ── */
+    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .stat-box { background:var(--card); border:1px solid var(--border2); border-radius:14px; padding:14px 10px; text-align:center; }
+    .stat-val { font-size:1.2rem; font-weight:800; color:#fff; }
+    .stat-lbl { font-size:0.62rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-top:3px; }
+    .stat-box.streak .stat-val { color:var(--amber); }
+    .stat-box.earned .stat-val { color:var(--purple-light); }
+    .stat-box.spent  .stat-val { color:var(--red); }
+
+    /* ── DAILY GOAL ── */
+    .goal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .goal-pct { font-size:0.8rem; font-weight:700; color:var(--green); }
+    .goal-bar-wrap { background:var(--border); border-radius:99px; height:8px; overflow:hidden; }
+    .goal-bar { height:100%; background:linear-gradient(90deg,#16a34a,var(--green)); border-radius:99px; transition:width 0.5s; }
+    .goal-bar.complete { background:linear-gradient(90deg,var(--amber),#fbbf24); }
+    .goal-sub { font-size:0.68rem; color:var(--muted); margin-top:7px; text-align:right; }
+
+    /* ── SPIN WHEEL ── */
+    .spin-container { display:flex; flex-direction:column; align-items:center; gap:14px; }
+    .spin-wheel-wrap { position:relative; width:240px; height:240px; }
+    .spin-pointer { position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent; border-top:22px solid var(--gold); filter:drop-shadow(0 2px 6px rgba(200,160,60,0.7)); z-index:10; }
+    #spin-canvas { border-radius:50%; box-shadow:0 0 32px rgba(124,58,237,0.35); }
+    .spin-result-box { background:#0e0e18; border:1px solid var(--border2); border-radius:14px; padding:12px 20px; text-align:center; min-width:220px; min-height:58px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:2px; }
+    .spin-result-icon { font-size:1.4rem; }
+    .spin-result-text { font-size:0.85rem; font-weight:700; color:var(--gold); }
+    .spin-result-sub  { font-size:0.68rem; color:var(--muted); }
+    .btn-spin { background:linear-gradient(135deg,var(--purple),var(--indigo)); border:none; border-radius:14px; color:#fff; font-size:1rem; font-weight:800; padding:13px 48px; cursor:pointer; transition:transform 0.1s,box-shadow 0.15s; letter-spacing:0.04em; box-shadow:0 4px 20px rgba(124,58,237,0.45); }
+    .btn-spin:hover:not(:disabled) { box-shadow:0 6px 28px rgba(124,58,237,0.7); }
+    .btn-spin:active:not(:disabled) { transform:scale(0.96); }
+    .btn-spin:disabled { background:#1a1228; color:#555; cursor:not-allowed; box-shadow:none; }
+    .spin-cooldown { font-size:0.75rem; color:var(--muted); margin-top:4px; text-align:center; min-height:18px; }
+    .spin-xp-boost-banner { background:linear-gradient(135deg,#1a0f00,#2a1800); border:1px solid var(--amber); border-radius:10px; padding:8px 14px; font-size:0.78rem; color:var(--amber); font-weight:700; text-align:center; width:100%; max-width:240px; }
+
+    /* ── SHOP ── */
+    .shop-tabs { display:flex; gap:6px; margin-bottom:14px; }
+    .shop-tab { flex:1; background:var(--border); border:1px solid var(--border2); border-radius:10px; color:var(--muted); font-size:0.75rem; font-weight:700; padding:7px 0; cursor:pointer; text-align:center; transition:all 0.15s; }
+    .shop-tab.active { background:var(--purple); border-color:var(--purple); color:#fff; }
+    .shop-panel { display:none; }
+    .shop-panel.active { display:block; }
+    .shop-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .shop-item { background:#0e0e18; border:1px solid var(--border2); border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; }
+    .shop-item:hover:not(.owned-active) { border-color:var(--purple); }
+    .shop-item.owned { border-color:#3a2a6a; background:#140e24; }
+    .shop-item.owned-active { border-color:var(--purple); background:#1a1228; box-shadow:0 0 14px rgba(124,58,237,0.25); cursor:default; }
+    .shop-icon { font-size:1.6rem; display:block; margin-bottom:4px; }
+    .shop-name { font-size:0.58rem; font-weight:700; color:#aaa; line-height:1.3; margin-bottom:4px; }
+    .shop-price { font-size:0.62rem; font-weight:800; color:var(--gold); }
+    .shop-item.owned-active .shop-price { color:var(--green); }
+    .shop-item.owned       .shop-price { color:var(--purple-light); }
+    .shop-theme-item { grid-column:span 2; display:flex; align-items:center; gap:10px; padding:10px 14px; }
+    .shop-theme-preview { width:36px; height:36px; border-radius:8px; flex-shrink:0; }
+    .shop-theme-info { flex:1; text-align:left; }
+    .shop-theme-name  { font-size:0.8rem; font-weight:700; color:#ccc; }
+    .shop-theme-price { font-size:0.65rem; color:var(--gold); font-weight:700; }
+    .shop-item.owned-active .shop-theme-name  { color:var(--purple-light); }
+    .shop-item.owned-active .shop-theme-price { color:var(--green); }
+    .shop-buy-btn { font-size:0.6rem; background:linear-gradient(135deg,var(--purple),var(--indigo)); border:none; border-radius:6px; color:#fff; font-weight:700; padding:3px 8px; cursor:pointer; margin-top:2px; transition:transform 0.1s; }
+    .shop-buy-btn.free,.shop-buy-btn.select { background:linear-gradient(135deg,#16a34a,#22c55e); }
+
+    /* ── ROADMAP ── */
+    .roadmap-scroll { display:flex; flex-direction:column; gap:0; position:relative; }
+    .roadmap-item { display:flex; align-items:flex-start; gap:14px; padding:11px 0; position:relative; }
+    .roadmap-item:not(:last-child)::after { content:''; position:absolute; left:19px; top:42px; bottom:-11px; width:2px; background:var(--border2); }
+    .roadmap-item.done:not(:last-child)::after    { background:var(--purple); }
+    .roadmap-item.current:not(:last-child)::after { background:linear-gradient(to bottom,var(--gold),var(--border2)); }
+    .roadmap-dot { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; z-index:1; border:2px solid var(--border2); background:var(--border); transition:all 0.3s; }
+    .roadmap-item.done    .roadmap-dot { border-color:var(--purple); background:#1a1228; box-shadow:0 0 12px rgba(124,58,237,0.3); }
+    .roadmap-item.current .roadmap-dot { border-color:var(--gold); background:#1c1810; animation:pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100%{box-shadow:0 0 12px rgba(200,160,60,0.3)} 50%{box-shadow:0 0 24px rgba(200,160,60,0.65)} }
+    .roadmap-content { flex:1; padding-top:5px; }
+    .roadmap-title { font-size:0.84rem; font-weight:700; color:#555; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .roadmap-item.done    .roadmap-title { color:var(--purple-light); }
+    .roadmap-item.current .roadmap-title { color:var(--gold); }
+    .roadmap-lvl-pill { font-size:0.58rem; font-weight:700; padding:2px 8px; border-radius:99px; background:var(--border2); color:var(--muted); }
+    .roadmap-item.done    .roadmap-lvl-pill { background:var(--purple); color:#fff; }
+    .roadmap-item.current .roadmap-lvl-pill { background:var(--gold);   color:#000; }
+    .roadmap-perk { font-size:0.71rem; color:#3a3a4a; margin-top:2px; }
+    .roadmap-item.done    .roadmap-perk { color:#555; }
+    .roadmap-item.current .roadmap-perk { color:#888; }
+    .roadmap-xp { font-size:0.64rem; color:var(--muted); margin-top:2px; }
+    .roadmap-nav { display:flex; justify-content:center; gap:8px; margin-top:12px; }
+    .btn-roadmap-nav { background:var(--border); border:1px solid var(--border2); border-radius:8px; color:#aaa; font-size:0.72rem; font-weight:700; padding:5px 14px; cursor:pointer; transition:all 0.15s; }
+    .btn-roadmap-nav:hover { background:var(--border2); color:#fff; }
+    .btn-roadmap-nav:disabled { opacity:0.3; cursor:not-allowed; }
+    .roadmap-page-info { font-size:0.68rem; color:var(--muted); align-self:center; }
+
+    /* ── ACHIEVEMENTS ── */
+    .achievements-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .ach-item { background:var(--border); border:1px solid var(--border2); border-radius:14px; padding:12px 6px; text-align:center; opacity:0.3; filter:grayscale(1); cursor:default; transition:all 0.3s; }
+    .ach-item.unlocked { opacity:1; filter:none; background:#1a1228; border-color:var(--purple); box-shadow:0 0 16px rgba(124,58,237,0.2); }
+    .ach-item.unlocked.just-unlocked { animation:achPop 0.5s cubic-bezier(.4,0,.2,1); }
+    @keyframes achPop { 0%{transform:scale(0.8)} 60%{transform:scale(1.18)} 100%{transform:scale(1)} }
+    .ach-icon { font-size:1.45rem; display:block; margin-bottom:5px; }
+    .ach-name { font-size:0.58rem; font-weight:700; color:#aaa; line-height:1.3; }
+    .ach-item.unlocked .ach-name { color:var(--purple-light); }
+
+    /* ── LEADERBOARD ── */
+    .lb-row-header { display:grid; grid-template-columns:28px 1fr 80px 60px; gap:8px; padding:0 4px 8px; border-bottom:1px solid var(--border2); margin-bottom:8px; }
+    .lb-col-hd { font-size:0.62rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
+    .lb-col-hd.right { text-align:right; }
+    .lb-list { display:flex; flex-direction:column; gap:6px; }
+    .lb-entry { display:grid; grid-template-columns:28px 1fr 80px 60px; gap:8px; align-items:center; background:#0e0e18; border:1px solid var(--border); border-radius:11px; padding:10px 12px; animation:slideIn 0.22s ease; }
+    .lb-entry.me { border-color:var(--purple); background:#16102a; }
+    .lb-rank { font-size:0.85rem; font-weight:800; color:var(--muted); text-align:center; }
+    .lb-entry:nth-child(1) .lb-rank { color:#fbbf24; }
+    .lb-entry:nth-child(2) .lb-rank { color:#9ca3af; }
+    .lb-entry:nth-child(3) .lb-rank { color:#b45309; }
+    .lb-player { display:flex; align-items:center; gap:8px; min-width:0; }
+    .lb-avatar { width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--indigo)); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:#fff; flex-shrink:0; overflow:hidden; }
+    .lb-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .lb-name { font-size:0.82rem; font-weight:600; color:#ccc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .lb-entry.me .lb-name { color:var(--purple-light); }
+    .lb-lvl-tag { font-size:0.58rem; background:var(--border2); color:var(--muted); padding:2px 6px; border-radius:99px; white-space:nowrap; }
+    .lb-earned { font-size:0.82rem; font-weight:700; color:var(--purple-light); text-align:right; }
+    .lb-coins  { font-size:0.82rem; font-weight:700; color:var(--gold); text-align:right; }
+    .lb-empty  { text-align:center; color:#333; font-size:0.82rem; padding:20px 0; }
+    .lb-footer { display:flex; gap:8px; margin-top:12px; }
+    .btn-submit-score { flex:1; background:linear-gradient(135deg,var(--purple),var(--indigo)); border:none; border-radius:10px; color:#fff; font-size:0.82rem; font-weight:700; padding:10px 0; cursor:pointer; transition:transform 0.1s; }
+    .btn-submit-score:active { transform:scale(0.97); }
+    .btn-reset-lb { background:none; border:1px solid var(--border2); border-radius:10px; color:var(--muted); font-size:0.72rem; font-weight:700; padding:10px 14px; cursor:pointer; transition:color 0.15s,border-color 0.15s; }
+    .btn-reset-lb:hover { color:var(--red); border-color:var(--red); }
+
+    /* ── HISTORY ── */
+    .history-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .btn-clear { background:none; border:1px solid var(--border2); border-radius:8px; color:var(--muted); font-size:0.66rem; font-weight:700; padding:4px 12px; cursor:pointer; transition:color 0.15s,border-color 0.15s; }
+    .btn-clear:hover { color:var(--red); border-color:var(--red); }
+    .history-list { display:flex; flex-direction:column; gap:7px; max-height:220px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+    .history-list::-webkit-scrollbar { width:4px; }
+    .history-list::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
+    .history-empty { text-align:center; color:#333; font-size:0.82rem; padding:20px 0; }
+    .tx-row { display:flex; align-items:center; gap:10px; background:#0e0e18; border:1px solid var(--border); border-radius:11px; padding:9px 12px; animation:slideIn 0.22s ease; }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+    .tx-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .tx-dot.earn     { background:var(--purple); box-shadow:0 0 6px rgba(124,58,237,0.7); }
+    .tx-dot.spend    { background:var(--red);    box-shadow:0 0 6px rgba(224,85,85,0.5); }
+    .tx-dot.boost    { background:var(--amber);  box-shadow:0 0 6px rgba(245,158,11,0.6); }
+    .tx-dot.referral { background:var(--green);  box-shadow:0 0 6px rgba(34,197,94,0.6); }
+    .tx-dot.purchase { background:var(--gold);   box-shadow:0 0 6px rgba(200,160,60,0.6); }
+    .tx-dot.spin     { background:#ec4899;       box-shadow:0 0 6px rgba(236,72,153,0.6); }
+    .tx-dot.mission  { background:#06b6d4;       box-shadow:0 0 6px rgba(6,182,212,0.6); }
+    .tx-info { flex:1; }
+    .tx-label { font-size:0.8rem; font-weight:600; color:#ccc; }
+    .tx-time  { font-size:0.67rem; color:#444; margin-top:1px; }
+    .tx-amount { font-size:0.86rem; font-weight:700; }
+    .tx-amount.earn     { color:var(--purple-light); }
+    .tx-amount.spend    { color:var(--red); }
+    .tx-amount.boost    { color:#fbbf24; }
+    .tx-amount.referral { color:var(--green); }
+    .tx-amount.purchase { color:var(--red); }
+    .tx-amount.spin     { color:#f9a8d4; }
+    .tx-amount.mission  { color:#67e8f9; }
+
+    /* ── VAULT ── */
+    .vault-locked { text-align:center; padding:8px 0; }
+    .vault-lock-icon { font-size:2.8rem; margin-bottom:10px; display:block; }
+    .vault-locked-title { font-size:1rem; font-weight:800; color:var(--gold); margin-bottom:6px; }
+    .vault-locked-sub { font-size:0.78rem; color:var(--muted); margin-bottom:18px; }
+    .vault-pin-row { display:flex; gap:8px; justify-content:center; }
+    .vault-pin-input { background:var(--border); border:2px solid var(--border2); border-radius:10px; padding:10px 14px; color:#fff; font-size:1.1rem; font-weight:700; letter-spacing:0.3em; text-align:center; outline:none; width:160px; transition:border-color 0.2s; font-family:monospace; }
+    .vault-pin-input:focus { border-color:var(--gold); }
+    .btn-vault-unlock { background:linear-gradient(135deg,#92400e,var(--amber)); border:none; border-radius:10px; color:#000; font-size:0.82rem; font-weight:800; padding:10px 16px; cursor:pointer; transition:transform 0.1s; }
+    .btn-vault-unlock:active { transform:scale(0.96); }
+    .vault-pin-error { font-size:0.75rem; color:var(--red); margin-top:8px; min-height:16px; }
+    .vault-setup-hint { font-size:0.72rem; color:var(--muted); margin-top:10px; }
+    .vault-unlocked { display:none; }
+    .vault-unlocked.active { display:block; }
+    .vault-top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .vault-title { font-size:0.82rem; font-weight:700; color:var(--gold); }
+    .vault-actions { display:flex; gap:6px; }
+    .btn-vault-action { background:var(--border); border:1px solid var(--border2); border-radius:8px; color:var(--muted); font-size:0.68rem; font-weight:700; padding:5px 10px; cursor:pointer; transition:all 0.15s; }
+    .btn-vault-action:hover { color:#ccc; border-color:#555; }
+    .btn-vault-lock { background:none; border:1px solid var(--border2); border-radius:8px; color:var(--muted); font-size:0.68rem; font-weight:700; padding:5px 10px; cursor:pointer; transition:all 0.15s; }
+    .btn-vault-lock:hover { color:var(--red); border-color:var(--red); }
+    .vault-filter-row { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+    .vault-filter { background:var(--border); border:1px solid var(--border2); border-radius:8px; color:var(--muted); font-size:0.66rem; font-weight:700; padding:4px 10px; cursor:pointer; transition:all 0.15s; }
+    .vault-filter.active { background:var(--purple); border-color:var(--purple); color:#fff; }
+    .vault-table-wrap { max-height:280px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+    .vault-table-wrap::-webkit-scrollbar { width:4px; }
+    .vault-table-wrap::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
+    .vault-table { width:100%; border-collapse:collapse; font-size:0.76rem; }
+    .vault-table th { color:var(--muted); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.1em; padding:0 8px 8px; text-align:left; border-bottom:1px solid var(--border2); }
+    .vault-table th.right { text-align:right; }
+    .vault-table td { padding:7px 8px; border-bottom:1px solid #13131a; color:#ccc; vertical-align:middle; }
+    .vault-table tr:last-child td { border-bottom:none; }
+    .vault-table tr:hover td { background:#0e0e18; }
+    .vault-type-pill { display:inline-flex; align-items:center; gap:4px; background:var(--border2); border-radius:6px; padding:2px 7px; font-size:0.62rem; font-weight:700; }
+    .vault-type-pill.earn     { background:#1e1030; color:var(--purple-light); }
+    .vault-type-pill.spend    { background:#200a0a; color:var(--red); }
+    .vault-type-pill.boost    { background:#1e1500; color:var(--amber); }
+    .vault-type-pill.referral { background:#062010; color:var(--green); }
+    .vault-type-pill.purchase { background:#1e1600; color:var(--gold); }
+    .vault-type-pill.spin     { background:#1e0818; color:#f9a8d4; }
+    .vault-type-pill.mission  { background:#001e24; color:#67e8f9; }
+    .vault-amount.earn     { color:var(--purple-light); font-weight:700; }
+    .vault-amount.spend    { color:var(--red);          font-weight:700; }
+    .vault-amount.purchase { color:var(--red);          font-weight:700; }
+    .vault-amount.referral { color:var(--green);        font-weight:700; }
+    .vault-amount.boost    { color:var(--amber);        font-weight:700; }
+    .vault-amount.spin     { color:#f9a8d4;             font-weight:700; }
+    .vault-amount.mission  { color:#67e8f9;             font-weight:700; }
+    .vault-empty { text-align:center; color:#333; font-size:0.82rem; padding:24px 0; }
+    .vault-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+    .vault-stat { background:#0e0e18; border:1px solid var(--border2); border-radius:10px; padding:10px 8px; text-align:center; }
+    .vault-stat-val { font-size:0.95rem; font-weight:800; color:#fff; }
+    .vault-stat-lbl { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-top:2px; }
+    .vault-change-pin { margin-top:12px; padding-top:12px; border-top:1px solid var(--border2); }
+    .vault-change-pin-row { display:flex; gap:8px; margin-top:8px; }
+    .vault-change-pin-input { flex:1; background:var(--border); border:1px solid var(--border2); border-radius:8px; padding:7px 10px; color:#fff; font-size:0.82rem; outline:none; font-family:monospace; transition:border-color 0.15s; }
+    .vault-change-pin-input:focus { border-color:var(--gold); }
+    .vault-change-pin-input::placeholder { color:var(--muted); font-family:inherit; }
+    .btn-change-pin { background:var(--border2); border:none; border-radius:8px; color:#ccc; font-size:0.75rem; font-weight:700; padding:7px 14px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+    .btn-change-pin:hover { background:#3a3a5a; color:#fff; }
+
+    /* ── LOGIN STREAK ── */
+    .streak-hero { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+    .streak-flame-wrap { position:relative; flex-shrink:0; }
+    .streak-flame { font-size:2.8rem; line-height:1; display:block; filter:drop-shadow(0 0 12px rgba(245,158,11,0.7)); }
+    .streak-num { font-size:2.2rem; font-weight:900; color:#fff; line-height:1.1; }
+    .streak-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); margin-top:1px; }
+    .streak-best { font-size:0.62rem; color:var(--amber); font-weight:700; margin-top:3px; }
+    .streak-claim-area { flex:1; }
+    .btn-claim-login { width:100%; background:linear-gradient(135deg,#92400e,var(--amber)); border:none; border-radius:12px; color:#000; font-size:0.88rem; font-weight:800; padding:11px 0; cursor:pointer; transition:transform 0.1s,box-shadow 0.15s; }
+    .btn-claim-login:hover:not(:disabled) { box-shadow:0 6px 24px rgba(245,158,11,0.5); }
+    .btn-claim-login:active:not(:disabled) { transform:scale(0.96); }
+    .btn-claim-login:disabled { background:#1a1200; color:#554400; cursor:not-allowed; }
+    .streak-claimed-note { font-size:0.72rem; color:var(--muted); text-align:center; margin-top:6px; }
+    /* calendar */
+    .streak-calendar-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:8px; }
+    .streak-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:16px; }
+    .streak-day { display:flex; flex-direction:column; align-items:center; gap:3px; }
+    .streak-day-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; border:2px solid var(--border2); transition:all 0.2s; }
+    .streak-day-dot.active    { background:linear-gradient(135deg,var(--amber),#ef4444); border-color:var(--amber); box-shadow:0 0 10px rgba(245,158,11,0.5); }
+    .streak-day-dot.today     { background:linear-gradient(135deg,var(--purple),var(--indigo)); border-color:var(--purple); box-shadow:0 0 10px rgba(124,58,237,0.5); }
+    .streak-day-dot.missed    { background:var(--border); border-color:var(--border2); color:#333; }
+    .streak-day-dot.future    { background:transparent; border-color:var(--border); color:transparent; }
+    .streak-day-lbl { font-size:0.55rem; color:var(--muted); text-align:center; }
+    /* milestones */
+    .streak-milestones { display:flex; flex-direction:column; gap:7px; }
+    .streak-milestone { display:flex; align-items:center; gap:12px; background:#0e0e18; border:1px solid var(--border2); border-radius:12px; padding:10px 14px; transition:border-color 0.2s; }
+    .streak-milestone.reached   { border-color:var(--amber); background:#1a1200; }
+    .streak-milestone.collected { border-color:var(--green);  background:#071207; }
+    .milestone-icon  { font-size:1.3rem; flex-shrink:0; }
+    .milestone-body  { flex:1; }
+    .milestone-name  { font-size:0.82rem; font-weight:700; color:#888; }
+    .streak-milestone.reached   .milestone-name { color:var(--amber); }
+    .streak-milestone.collected .milestone-name { color:var(--green); }
+    .milestone-req   { font-size:0.62rem; color:var(--muted); margin-top:1px; }
+    .milestone-reward{ font-size:0.7rem; font-weight:700; color:var(--gold); }
+    .btn-claim-milestone { background:linear-gradient(135deg,#92400e,var(--amber)); border:none; border-radius:8px; color:#000; font-size:0.72rem; font-weight:800; padding:7px 12px; cursor:pointer; flex-shrink:0; transition:transform 0.1s; }
+    .btn-claim-milestone:active { transform:scale(0.95); }
+    .milestone-collected-badge { font-size:0.72rem; font-weight:700; color:var(--green); flex-shrink:0; }
+    .milestone-progress-bar-wrap { height:4px; background:var(--border); border-radius:99px; margin-top:4px; overflow:hidden; width:100%; }
+    .milestone-progress-bar { height:100%; background:linear-gradient(90deg,var(--amber),#fbbf24); border-radius:99px; transition:width 0.4s; }
+
+    /* ── FRIENDS & GIFTS ── */
+    .fg-tabs { display:flex; gap:6px; margin-bottom:14px; }
+    .fg-tab { flex:1; background:var(--border); border:1px solid var(--border2); border-radius:10px; color:var(--muted); font-size:0.72rem; font-weight:700; padding:7px 0; cursor:pointer; text-align:center; transition:all 0.15s; }
+    .fg-tab.active { background:var(--purple); border-color:var(--purple); color:#fff; }
+    .fg-panel { display:none; flex-direction:column; gap:10px; }
+    .fg-panel.active { display:flex; }
+    /* friends */
+    .friend-add-row { display:flex; gap:8px; }
+    .friend-input { flex:1; background:var(--border); border:1px solid var(--border2); border-radius:10px; padding:9px 14px; color:#fff; font-size:0.8rem; outline:none; font-family:monospace; text-transform:uppercase; transition:border-color 0.15s; }
+    .friend-input:focus { border-color:var(--purple); }
+    .friend-input::placeholder { color:var(--muted); text-transform:none; font-family:inherit; }
+    .btn-add-friend { background:linear-gradient(135deg,var(--purple),var(--indigo)); border:none; border-radius:10px; color:#fff; font-size:0.8rem; font-weight:700; padding:9px 14px; cursor:pointer; white-space:nowrap; transition:transform 0.1s; }
+    .btn-add-friend:active { transform:scale(0.96); }
+    .friends-list { display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+    .friends-empty { text-align:center; color:#333; font-size:0.82rem; padding:20px 0; }
+    .friend-card { background:#0e0e18; border:1px solid var(--border2); border-radius:13px; padding:12px 14px; display:flex; align-items:center; gap:12px; animation:slideIn 0.22s ease; }
+    .friend-card.challenge-winning { border-color:var(--green); }
+    .friend-card.challenge-losing  { border-color:var(--red); }
+    .friend-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--indigo)); display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:800; color:#fff; flex-shrink:0; overflow:hidden; }
+    .friend-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .friend-body { flex:1; min-width:0; }
+    .friend-name { font-size:0.88rem; font-weight:700; color:#ddd; }
+    .friend-code { font-size:0.62rem; color:var(--muted); font-family:monospace; margin-top:1px; }
+    .friend-stats { display:flex; gap:10px; margin-top:5px; flex-wrap:wrap; }
+    .friend-stat { font-size:0.65rem; color:#888; }
+    .friend-stat strong { color:#ccc; }
+    .friend-challenge { font-size:0.62rem; font-weight:700; margin-top:4px; }
+    .friend-challenge.win { color:var(--green); }
+    .friend-challenge.lose { color:var(--red); }
+    .friend-challenge.tie { color:var(--muted); }
+    .btn-remove-friend { background:none; border:1px solid var(--border2); border-radius:7px; color:var(--muted); font-size:0.65rem; font-weight:700; padding:4px 8px; cursor:pointer; transition:all 0.15s; flex-shrink:0; }
+    .btn-remove-friend:hover { color:var(--red); border-color:var(--red); }
+    /* gift send */
+    .gift-send-form { display:flex; flex-direction:column; gap:10px; }
+    .gift-amount-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .gift-amount-presets { display:flex; gap:6px; flex-wrap:wrap; }
+    .gift-preset { background:var(--border2); border:1px solid transparent; border-radius:8px; color:#aaa; font-size:0.72rem; font-weight:700; padding:5px 10px; cursor:pointer; transition:all 0.15s; }
+    .gift-preset:hover,.gift-preset.selected { background:var(--purple); border-color:var(--purple); color:#fff; }
+    .gift-custom-input { background:var(--border); border:1px solid var(--border2); border-radius:10px; padding:9px 14px; color:#fff; font-size:0.9rem; font-weight:700; outline:none; width:100%; transition:border-color 0.15s; }
+    .gift-custom-input:focus { border-color:var(--gold); }
+    .gift-custom-input::placeholder { color:var(--muted); font-weight:400; }
+    .btn-create-gift { background:linear-gradient(135deg,#065f46,var(--green)); border:none; border-radius:12px; color:#fff; font-size:0.9rem; font-weight:800; padding:12px 0; cursor:pointer; transition:transform 0.1s,box-shadow 0.15s; width:100%; }
+    .btn-create-gift:hover:not(:disabled) { box-shadow:0 6px 24px rgba(34,197,94,0.4); }
+    .btn-create-gift:active:not(:disabled) { transform:scale(0.97); }
+    .btn-create-gift:disabled { background:#0a1a0a; color:#555; cursor:not-allowed; }
+    .gift-code-display { background:#071a0c; border:2px solid var(--green); border-radius:14px; padding:16px; text-align:center; }
+    .gift-code-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--green); margin-bottom:8px; }
+    .gift-code-value { font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:0.08em; font-family:monospace; word-break:break-all; margin-bottom:10px; }
+    .gift-code-sub { font-size:0.68rem; color:#666; margin-bottom:10px; }
+    .btn-copy-gift { background:var(--green); border:none; border-radius:10px; color:#000; font-size:0.82rem; font-weight:800; padding:10px 24px; cursor:pointer; transition:all 0.15s; }
+    .btn-copy-gift:hover { background:#4ade80; }
+    .btn-new-gift { background:none; border:1px solid var(--border2); border-radius:10px; color:var(--muted); font-size:0.75rem; font-weight:700; padding:8px 16px; cursor:pointer; margin-left:8px; transition:all 0.15s; }
+    .btn-new-gift:hover { color:#ccc; border-color:#555; }
+    /* gift receive */
+    .gift-receive-form { display:flex; flex-direction:column; gap:10px; }
+    .gift-receive-input { background:var(--border); border:1px solid var(--border2); border-radius:10px; padding:11px 14px; color:#fff; font-size:0.82rem; outline:none; font-family:monospace; letter-spacing:0.04em; text-transform:uppercase; transition:border-color 0.15s; width:100%; }
+    .gift-receive-input:focus { border-color:var(--green); }
+    .gift-receive-input::placeholder { color:var(--muted); text-transform:none; font-family:inherit; letter-spacing:0; }
+    .btn-redeem-gift { background:linear-gradient(135deg,#065f46,var(--green)); border:none; border-radius:12px; color:#fff; font-size:0.9rem; font-weight:800; padding:12px 0; cursor:pointer; transition:transform 0.1s,box-shadow 0.15s; width:100%; }
+    .btn-redeem-gift:hover:not(:disabled) { box-shadow:0 6px 24px rgba(34,197,94,0.4); }
+    .btn-redeem-gift:active:not(:disabled) { transform:scale(0.97); }
+    .fg-msg { font-size:0.75rem; font-weight:700; min-height:18px; text-align:center; }
+    .fg-msg.ok  { color:var(--green); }
+    .fg-msg.err { color:var(--red); }
+    .gift-history-list { display:flex; flex-direction:column; gap:6px; margin-top:4px; max-height:160px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+    .gift-hist-row { display:flex; align-items:center; justify-content:space-between; background:#0e0e18; border:1px solid var(--border2); border-radius:10px; padding:8px 12px; }
+    .gift-hist-code { font-size:0.65rem; font-family:monospace; color:#888; letter-spacing:0.04em; }
+    .gift-hist-amount { font-size:0.75rem; font-weight:700; color:var(--green); }
+    .gift-hist-status { font-size:0.62rem; font-weight:700; padding:2px 7px; border-radius:6px; }
+    .gift-hist-status.active { background:#062010; color:var(--green); }
+    .gift-hist-status.redeemed { background:#1a1a1a; color:var(--muted); }
+
+    /* ── LEVEL-UP MODAL ── */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.82); display:flex; align-items:center; justify-content:center; z-index:100; }
+    .modal-overlay.hidden { display:none; }
+    .modal { background:#16101f; border:1px solid var(--purple); border-radius:24px; padding:36px 32px; text-align:center; max-width:320px; width:90%; box-shadow:0 0 80px rgba(124,58,237,0.5); animation:popIn 0.3s cubic-bezier(.4,0,.2,1); }
+    @keyframes popIn { from{transform:scale(0.75);opacity:0} to{transform:scale(1);opacity:1} }
+    .modal-stars  { font-size:1.8rem; letter-spacing:6px; margin-bottom:12px; animation:starSpin 0.8s ease; }
+    @keyframes starSpin { from{transform:scale(0) rotate(-180deg);opacity:0} to{transform:scale(1) rotate(0deg);opacity:1} }
+    .modal-level-num { font-size:0.72rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; background:linear-gradient(135deg,var(--purple),var(--indigo)); color:#fff; padding:4px 16px; border-radius:99px; display:inline-block; margin-bottom:10px; }
+    .modal-title { font-size:1.35rem; font-weight:900; color:var(--gold); margin-bottom:4px; }
+    .modal-rank  { font-size:0.95rem; color:var(--purple-light); font-weight:700; margin-bottom:16px; }
+    .modal-perk-box { background:#0e0e18; border:1px solid var(--border2); border-radius:12px; padding:12px 16px; margin-bottom:20px; text-align:left; }
+    .modal-perk-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:5px; }
+    .modal-perk-text  { font-size:0.85rem; color:#ccc; }
+    .modal-perk-icon  { font-size:1rem; margin-right:6px; }
+    .modal-btn { background:linear-gradient(135deg,var(--purple),var(--indigo)); color:#fff; border:none; border-radius:12px; padding:12px 44px; font-size:0.95rem; font-weight:700; cursor:pointer; width:100%; }
+
+    #particle-canvas { position:fixed; inset:0; pointer-events:none; z-index:50; }
+  /* ── ADMIN PANEL ── */
+  .admin-panel { display:none; }
+  .admin-panel.visible { display:block; }
+  .admin-panel .card-sm { border:1.5px solid #ff4444; background:linear-gradient(135deg,#1a0a0a,#0d0d1a); }
+  .admin-title { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .admin-title-text { font-size:0.9rem; font-weight:800; color:#ff4444; letter-spacing:1px; text-transform:uppercase; }
+  .admin-badge { background:#ff4444; color:#fff; font-size:0.6rem; font-weight:900; padding:2px 7px; border-radius:99px; letter-spacing:1px; }
+  .admin-player-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .admin-player-row:last-child { border-bottom:none; }
+  .admin-avatar { width:32px; height:32px; border-radius:50%; background:var(--purple); display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:800; color:#fff; flex-shrink:0; }
+  .admin-player-name { flex:1; font-size:0.82rem; font-weight:700; color:#e0e0f0; }
+  .admin-coins { font-size:0.8rem; font-weight:700; color:var(--gold); min-width:54px; text-align:right; }
+  .admin-btns { display:flex; gap:5px; align-items:center; }
+  .admin-amt { width:62px; padding:5px 6px; border-radius:7px; border:1px solid rgba(255,255,255,0.13); background:#1a1a2e; color:#fff; font-size:0.75rem; text-align:center; }
+  .admin-plus  { background:#1db954; color:#fff; border:none; border-radius:7px; width:28px; height:28px; font-size:1rem; font-weight:900; cursor:pointer; transition:transform 0.1s; }
+  .admin-minus { background:#ff4444; color:#fff; border:none; border-radius:7px; width:28px; height:28px; font-size:1rem; font-weight:900; cursor:pointer; transition:transform 0.1s; }
+  .admin-plus:active,.admin-minus:active { transform:scale(0.9); }
+  .admin-empty { text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; padding:14px 0; }
+  .admin-refresh { background:rgba(255,68,68,0.13); border:1px solid #ff4444; color:#ff4444; font-size:0.78rem; font-weight:700; border-radius:8px; padding:7px 14px; cursor:pointer; margin-top:10px; width:100%; transition:background 0.2s; }
+  .admin-refresh:hover { background:rgba(255,68,68,0.22); }
+  </style>
+</head>
+<body>
+<canvas id="particle-canvas"></canvas>
+
+<!-- Level-up modal -->
+<div class="modal-overlay hidden" id="levelup-modal">
+  <div class="modal">
+    <div class="modal-stars">⭐🌟⭐</div>
+    <div class="modal-level-num" id="modal-level-num">LEVEL 2</div>
+    <div class="modal-title">Level Up!</div>
+    <div class="modal-rank" id="modal-rank">Coin Hunter I</div>
+    <div class="modal-perk-box">
+      <div class="modal-perk-label">New Perk Unlocked</div>
+      <div class="modal-perk-text" id="modal-perk"><span class="modal-perk-icon">🎁</span>Keep going!</div>
+    </div>
+    <button class="modal-btn" onclick="closeLevelup()">Let's Go! 🚀</button>
+  </div>
+</div>
+
+<div class="wrapper">
+
+  <!-- ── GOOGLE SIGN-IN ── -->
+  <div class="card-sm" id="google-auth-card">
+    <div class="section-label">🔐 Google Account</div>
+
+    <!-- Setup: no client ID yet -->
+    <div id="gauth-setup-view">
+      <div class="gauth-setup">
+        <div class="gauth-hint">
+          Connect your Google account to auto-fill your name and avatar.<br>
+          Paste your <strong style="color:#ccc">Google OAuth Client ID</strong> below.
+          (<a href="https://console.cloud.google.com/apis/credentials" target="_blank">Get one free here ↗</a>)
+        </div>
+        <div class="gauth-input-row">
+          <input class="gauth-input" id="gcid-input" type="text" placeholder="xxxx.apps.googleusercontent.com" />
+          <button class="btn-gauth-save" onclick="saveGCID()">Connect</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Waiting for sign-in -->
+    <div id="gauth-btn-view" class="hidden">
+      <div class="gauth-signin-btn-wrap">
+        <div id="g_id_onload"
+          data-callback="onGoogleCredential"
+          data-auto_prompt="false">
+        </div>
+        <div id="google-signin-btn"></div>
+        <div class="gauth-waiting">Sign in with your Google account</div>
+        <span class="gauth-gcid-clear" onclick="clearGCID()">✕ Remove Client ID &amp; disconnect</span>
+      </div>
+    </div>
+
+    <!-- Signed in profile -->
+    <div id="gauth-profile-view" class="hidden">
+      <div class="gauth-profile">
+        <div id="gauth-avatar-wrap"></div>
+        <div class="gauth-info">
+          <div class="gauth-name" id="gauth-name"></div>
+          <div class="gauth-email" id="gauth-email"></div>
+          <span class="gauth-verified">✓ Google Verified</span>
+        </div>
+        <button class="btn-gauth-out" onclick="googleSignOut()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PLAYER ── -->
+  <div class="card-sm">
+    <div class="player-row">
+      <div class="player-avatar" id="player-avatar">👤</div>
+      <div class="player-info">
+        <div class="player-greeting">Welcome back,</div>
+        <div class="player-display-name" id="player-display-name">Anonymous</div>
+      </div>
+    </div>
+    <div class="player-input-wrap">
+      <input class="player-input" id="player-input" type="text" maxlength="18" placeholder="Enter your name…" />
+      <button class="btn-save-name" onclick="saveName()">Set Name</button>
+    </div>
+  </div>
+
+  <!-- ── REFERRAL ── -->
+  <div class="card-sm">
+    <div class="section-label">Referral Codes</div>
+    <div class="referral-grid">
+      <div class="referral-box">
+        <div class="referral-box-label">Your Code</div>
+        <div class="referral-code-display" id="my-referral-code">——————</div>
+        <button class="btn-copy" onclick="copyCode()">📋 Copy Code</button>
+      </div>
+      <div class="referral-box">
+        <div class="referral-box-label">Friend's Code</div>
+        <div class="referral-input-area">
+          <input class="referral-input" id="referral-input" type="text" maxlength="10" placeholder="e.g. SDC-AB12CD" />
+          <button class="btn-redeem" onclick="redeemCode()">🎁 Redeem +100 SDC</button>
+        </div>
+      </div>
+    </div>
+    <div class="referral-msg hidden" id="referral-msg"></div>
+  </div>
+
+  <!-- ── YOUTUBE BONUS ── -->
+  <div class="card-sm">
+    <div class="section-label">🎬 Channel Bonus</div>
+    <div class="yt-card">
+      <div class="yt-logo">▶</div>
+      <div class="yt-info">
+        <div class="yt-channel">@Indian_lofi_790</div>
+        <div class="yt-sub-line">Subscribe once, earn forever</div>
+        <span class="yt-bonus-pill">+1,000 SDC One-Time Bonus</span>
+      </div>
+    </div>
+    <div class="yt-claim-area" id="yt-claim-area">
+      <div class="yt-check-row">
+        <input type="checkbox" id="yt-check" />
+        <label class="yt-check-label" for="yt-check">I have subscribed to @Indian_lofi_790 on YouTube</label>
+      </div>
+      <button class="btn-yt-claim" id="btn-yt-claim" onclick="claimYT()" disabled>Subscribe &amp; Claim 1,000 SDC 🎬</button>
+      <a class="yt-link" href="https://www.youtube.com/@Indian_lofi_790" target="_blank">▶ Open YouTube Channel</a>
+    </div>
+    <div class="yt-claimed-badge hidden" id="yt-claimed-badge">
+      <span>✅ 1,000 SDC bonus claimed! Thanks for subscribing 🎉</span>
+    </div>
+  </div>
+
+  <!-- ── MISSIONS ── -->
+  <div class="card-sm">
+    <div class="section-label">🎯 Missions &amp; Quests</div>
+    <div class="missions-tabs">
+      <div class="mission-tab active" onclick="switchMissionTab('daily',this)">📅 Daily</div>
+      <div class="mission-tab" onclick="switchMissionTab('weekly',this)">📆 Weekly</div>
+    </div>
+    <div class="mission-panel active" id="mission-daily-panel"></div>
+    <div class="mission-panel" id="mission-weekly-panel"></div>
+    <div class="missions-reset-note" id="missions-reset-note"></div>
+  </div>
+
+  <!-- ── FRIENDS & GIFTS ── -->
+  <div class="card-sm">
+    <div class="section-label">👥 Friends &amp; Gifts</div>
+    <div class="fg-tabs">
+      <div class="fg-tab active" onclick="switchFGTab('friends',this)">👥 Friends</div>
+      <div class="fg-tab" onclick="switchFGTab('send',this)">🎁 Send Gift</div>
+      <div class="fg-tab" onclick="switchFGTab('receive',this)">📬 Receive Gift</div>
+    </div>
+
+    <!-- Friends panel -->
+    <div class="fg-panel active" id="fg-friends">
+      <div class="friend-add-row">
+        <input class="friend-input" id="friend-code-input" maxlength="12" placeholder="Friend's SDC code e.g. SDC-AB12CD" />
+        <button class="btn-add-friend" onclick="addFriend()">+ Add</button>
+      </div>
+      <div class="fg-msg hidden" id="friend-msg"></div>
+      <div class="friends-list" id="friends-list">
+        <div class="friends-empty" id="friends-empty">No friends yet — add someone by their referral code!</div>
+      </div>
+    </div>
+
+    <!-- Send Gift panel -->
+    <div class="fg-panel" id="fg-send">
+      <div id="gift-send-form-wrap">
+        <div class="gift-send-form">
+          <div style="font-size:0.78rem;color:#888;line-height:1.55;">
+            Choose an amount, create a gift code, and share it with a friend. The SDC is deducted from your balance immediately.
+          </div>
+          <div class="gift-amount-presets" id="gift-presets">
+            <div class="gift-preset" onclick="selectGiftPreset(50,this)">50 SDC</div>
+            <div class="gift-preset" onclick="selectGiftPreset(100,this)">100 SDC</div>
+            <div class="gift-preset" onclick="selectGiftPreset(250,this)">250 SDC</div>
+            <div class="gift-preset" onclick="selectGiftPreset(500,this)">500 SDC</div>
+          </div>
+          <input class="gift-custom-input" id="gift-amount-input" type="number" min="1" max="50000" placeholder="Or type a custom amount…" oninput="clearGiftPresets()" />
+          <button class="btn-create-gift" onclick="createGift()">🎁 Create Gift Code</button>
+          <div class="fg-msg hidden" id="gift-send-msg"></div>
+        </div>
+      </div>
+      <div class="gift-code-display hidden" id="gift-code-result">
+        <div class="gift-code-label">🎁 Gift Code Ready — Share this!</div>
+        <div class="gift-code-value" id="gift-code-value">—</div>
+        <div class="gift-code-sub">Paste this code into the "Receive Gift" tab on any SDC wallet.</div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="btn-copy-gift" onclick="copyGiftCode()">📋 Copy Code</button>
+          <button class="btn-new-gift" onclick="resetGiftForm()">New Gift</button>
+        </div>
+      </div>
+      <!-- Sent gift history -->
+      <div id="sent-gift-history-wrap" class="hidden">
+        <div class="section-label" style="margin:8px 0 6px">Your Sent Gifts</div>
+        <div class="gift-history-list" id="sent-gift-list"></div>
+      </div>
+    </div>
+
+    <!-- Receive Gift panel -->
+    <div class="fg-panel" id="fg-receive">
+      <div class="gift-receive-form">
+        <div style="font-size:0.78rem;color:#888;line-height:1.55;">
+          Ask your friend for their gift code and enter it below to receive SDC!
+        </div>
+        <input class="gift-receive-input" id="gift-receive-input" maxlength="24" placeholder="Paste gift code: GFT-XXXX-XXXXXX-XX" />
+        <button class="btn-redeem-gift" onclick="redeemGift()">🎉 Claim Gift</button>
+        <div class="fg-msg hidden" id="gift-receive-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── WALLET ── -->
+  <div class="card wallet-top">
+    <div class="sdc-logo-wrap">
+      <img src="icon.png" alt="SDC Logo" class="sdc-logo" />
+      <span class="coin-icon-badge" id="coin-icon"></span>
+    </div>
+    <div class="wallet-name">Shadow Coin</div>
+    <div class="wallet-ticker">SDC</div>
+    <!-- Live Price Ticker -->
+    <div class="price-ticker-wrap">
+      <div class="price-ticker-top">
+        <div>
+          <div class="price-ticker-label"><span class="price-live-dot"></span>SDC / USD · Live</div>
+          <div class="price-main">
+            <div class="price-value" id="ticker-price">$0.0000</div>
+            <div class="price-change up" id="ticker-change">+0.00%</div>
+          </div>
+        </div>
+        <div class="sparkline-wrap">
+          <canvas id="sparkline-canvas" width="100" height="44"></canvas>
+        </div>
+      </div>
+      <div class="price-ticker-stats">
+        <div class="price-stat-item">
+          <div class="price-stat-lbl">24h High</div>
+          <div class="price-stat-val" id="ticker-high">—</div>
+        </div>
+        <div class="price-stat-item">
+          <div class="price-stat-lbl">24h Low</div>
+          <div class="price-stat-val" id="ticker-low">—</div>
+        </div>
+        <div class="price-stat-item">
+          <div class="price-stat-lbl">Volume</div>
+          <div class="price-stat-val" id="ticker-vol">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="level-row">
+      <span class="level-badge" id="level-badge">LVL 1</span>
+      <span class="level-name" id="level-name">Shadow Newcomer</span>
+    </div>
+    <div class="xp-bar-wrap"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
+    <div class="xp-row">
+      <span class="xp-label" id="xp-label">0 / 10 XP</span>
+      <span class="xp-next-perk" id="xp-next-perk">10 XP to LVL 2</span>
+    </div>
+    <div class="balance-label">Balance</div>
+    <div class="balance" id="coins">0</div>
+    <div class="balance-sdc">SDC</div>
+    <div class="toast hidden" id="toast"></div>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="stats-row">
+    <div class="stat-box earned"><div class="stat-val" id="stat-earned">0</div><div class="stat-lbl">Total Earned</div></div>
+    <div class="stat-box spent"> <div class="stat-val" id="stat-spent">0</div> <div class="stat-lbl">Total Spent</div></div>
+    <div class="stat-box streak"><div class="stat-val" id="stat-streak">0🔥</div><div class="stat-lbl">Day Streak</div></div>
+  </div>
+
+  <!-- ── DAILY GOAL ── -->
+  <div class="card-sm">
+    <div class="goal-header">
+      <span class="section-label" style="margin:0">Daily Goal</span>
+      <span class="goal-pct" id="goal-pct">0%</span>
+    </div>
+    <div class="goal-bar-wrap"><div class="goal-bar" id="goal-bar" style="width:0%"></div></div>
+    <div class="goal-sub" id="goal-sub">0 / 100 SDC earned today</div>
+  </div>
+
+  <!-- ── LOGIN STREAK ── -->
+  <div class="card-sm" id="streak-card">
+    <div class="section-label">🔥 Daily Login Streak</div>
+    <div class="streak-hero">
+      <div class="streak-flame-wrap">
+        <span class="streak-flame" id="streak-flame-icon">🔥</span>
+      </div>
+      <div>
+        <div class="streak-num" id="streak-display-num">0</div>
+        <div class="streak-label">Day Streak</div>
+        <div class="streak-best" id="streak-best-label"></div>
+      </div>
+      <div class="streak-claim-area">
+        <button class="btn-claim-login" id="btn-claim-login" onclick="claimLoginBonus()">Claim Daily Bonus</button>
+        <div class="streak-claimed-note hidden" id="streak-claimed-note">Come back tomorrow ✓</div>
+      </div>
+    </div>
+
+    <div class="streak-calendar-label">Last 14 Days</div>
+    <div class="streak-calendar" id="streak-calendar"></div>
+
+    <div class="section-label" style="margin-bottom:10px">Streak Milestones</div>
+    <div class="streak-milestones" id="streak-milestones"></div>
+  </div>
+
+  <!-- ── SPIN WHEEL ── -->
+  <div class="card-sm">
+    <div class="section-label">🎰 Daily Spin</div>
+    <div class="spin-container">
+      <div class="spin-wheel-wrap">
+        <div class="spin-pointer"></div>
+        <canvas id="spin-canvas" width="240" height="240"></canvas>
+      </div>
+      <div id="spin-xp-banner" class="spin-xp-boost-banner hidden">🔥 XP Boost active — <span id="spin-xp-count">0</span> earns remaining!</div>
+      <div class="spin-result-box" id="spin-result-box">
+        <div class="spin-result-icon" id="spin-result-icon">🎰</div>
+        <div class="spin-result-text" id="spin-result-text">Spin the wheel!</div>
+        <div class="spin-result-sub"  id="spin-result-sub">One free spin every day</div>
+      </div>
+      <button class="btn-spin" id="btn-spin" onclick="doSpin()">🎰 Spin Now!</button>
+      <div class="spin-cooldown" id="spin-cooldown"></div>
+    </div>
+  </div>
+
+  <!-- ── SHOP ── -->
+  <div class="card-sm">
+    <div class="section-label">Shop</div>
+    <div class="shop-tabs">
+      <div class="shop-tab active" onclick="switchShopTab('icons',this)">🪙 Icons</div>
+      <div class="shop-tab" onclick="switchShopTab('themes',this)">🎨 Themes</div>
+      <div class="shop-tab" onclick="switchShopTab('badges',this)">🏅 Badges</div>
+    </div>
+    <div class="shop-panel active" id="shop-icons"><div class="shop-grid" id="shop-icons-grid"></div></div>
+    <div class="shop-panel" id="shop-themes"><div class="shop-grid" id="shop-themes-grid" style="grid-template-columns:1fr 1fr"></div></div>
+    <div class="shop-panel" id="shop-badges"><div class="shop-grid" id="shop-badges-grid"></div></div>
+  </div>
+
+  <!-- ── ROADMAP ── -->
+  <div class="card-sm">
+    <div class="section-label">Level Roadmap <span id="roadmap-range" style="color:var(--muted);font-weight:400"></span></div>
+    <div class="roadmap-scroll" id="roadmap"></div>
+    <div class="roadmap-nav">
+      <button class="btn-roadmap-nav" id="roadmap-prev" onclick="roadmapPage(-1)">← Earlier</button>
+      <span class="roadmap-page-info" id="roadmap-page-info"></span>
+      <button class="btn-roadmap-nav" id="roadmap-next" onclick="roadmapPage(+1)">Later →</button>
+    </div>
+  </div>
+
+  <!-- ── ACHIEVEMENTS ── -->
+  <div class="card-sm">
+    <div class="section-label">Achievements</div>
+    <div class="achievements-grid" id="ach-grid"></div>
+  </div>
+
+  <!-- ── LEADERBOARD ── -->
+  <div class="card-sm">
+    <div class="history-header">
+      <span class="section-label" style="margin:0">Leaderboard</span>
+    </div>
+    <div class="lb-row-header">
+      <span class="lb-col-hd">#</span>
+      <span class="lb-col-hd">Player</span>
+      <span class="lb-col-hd right">Earned</span>
+      <span class="lb-col-hd right">Balance</span>
+    </div>
+    <div class="lb-list" id="lb-list">
+      <div class="lb-empty" id="lb-empty">No entries yet — submit your score!</div>
+    </div>
+    <div class="lb-footer">
+      <button class="btn-submit-score" onclick="submitScore()">📊 Save My Score</button>
+      <button class="btn-reset-lb" onclick="resetLeaderboard()">Reset</button>
+    </div>
+  </div>
+
+  <!-- ── ADMIN PANEL (OWNER only) ── -->
+  <div class="admin-panel" id="admin-panel">
+    <div class="card-sm">
+      <div class="admin-title">
+        <span class="admin-title-text">👑 Admin Panel</span>
+        <span class="admin-badge">OWNER ONLY</span>
+      </div>
+      <div id="admin-player-list"><div class="admin-empty">No leaderboard entries yet.<br>Players must save their score first.</div></div>
+      <button class="admin-refresh" onclick="renderAdminPanel()">↻ Refresh Player List</button>
+    </div>
+  </div>
+
+  <!-- ── HISTORY ── -->
+  <div class="card-sm">
+    <div class="history-header">
+      <span class="section-label" style="margin:0">Recent Transactions</span>
+      <button class="btn-clear" onclick="clearHistory()">Clear</button>
+    </div>
+    <div class="history-list" id="history-list">
+      <div class="history-empty" id="history-empty">No transactions yet</div>
+    </div>
+  </div>
+
+  <!-- ── SECRET VAULT ── -->
+  <div class="card-sm">
+    <div class="section-label">🔒 Secret Vault</div>
+    <div class="vault-locked" id="vault-locked">
+      <span class="vault-lock-icon">🔐</span>
+      <div class="vault-locked-title">Transaction Archive</div>
+      <div class="vault-locked-sub">All transactions stored here. Enter your secret code to access.</div>
+      <div class="vault-pin-row">
+        <input class="vault-pin-input" id="vault-pin-input" type="password" maxlength="20" placeholder="Secret code" />
+        <button class="btn-vault-unlock" id="vault-unlock-btn" onclick="vaultUnlock()">Unlock</button>
+      </div>
+      <div class="vault-pin-error hidden" id="vault-pin-error"></div>
+      <div class="vault-setup-hint" id="vault-setup-hint"></div>
+    </div>
+    <div class="vault-unlocked" id="vault-unlocked">
+      <div class="vault-top-bar">
+        <div class="vault-title">🔓 Archive Unlocked</div>
+        <div class="vault-actions">
+          <button class="btn-vault-action" onclick="exportVault()">⬇ Export</button>
+          <button class="btn-vault-lock" onclick="vaultLock()">🔒 Lock</button>
+        </div>
+      </div>
+      <div class="vault-stats-row">
+        <div class="vault-stat"><div class="vault-stat-val" id="vs-total">0</div><div class="vault-stat-lbl">All Txns</div></div>
+        <div class="vault-stat"><div class="vault-stat-val" id="vs-earned">0</div><div class="vault-stat-lbl">Total Earned</div></div>
+        <div class="vault-stat"><div class="vault-stat-val" id="vs-spent">0</div><div class="vault-stat-lbl">Total Spent</div></div>
+      </div>
+      <div class="vault-filter-row">
+        <div class="vault-filter active" onclick="setVaultFilter('all',this)">All</div>
+        <div class="vault-filter" onclick="setVaultFilter('earn',this)">Earn</div>
+        <div class="vault-filter" onclick="setVaultFilter('spend',this)">Spend</div>
+        <div class="vault-filter" onclick="setVaultFilter('referral',this)">Referral</div>
+        <div class="vault-filter" onclick="setVaultFilter('purchase',this)">Shop</div>
+        <div class="vault-filter" onclick="setVaultFilter('spin',this)">Spin</div>
+        <div class="vault-filter" onclick="setVaultFilter('mission',this)">Mission</div>
+        <div class="vault-filter" onclick="setVaultFilter('boost',this)">Boost</div>
+      </div>
+      <div class="vault-table-wrap">
+        <table class="vault-table">
+          <thead><tr><th>Type</th><th>Description</th><th>Date</th><th class="right">Amount</th></tr></thead>
+          <tbody id="vault-tbody"></tbody>
+        </table>
+        <div class="vault-empty hidden" id="vault-empty">No transactions found.</div>
+      </div>
+      <div class="vault-change-pin">
+        <div class="section-label" style="margin:0 0 8px">Change Secret Code</div>
+        <div class="vault-change-pin-row">
+          <input class="vault-change-pin-input" id="vault-new-pin" type="password" maxlength="20" placeholder="New secret code…" />
+          <button class="btn-change-pin" onclick="changeVaultPin()">Update</button>
+        </div>
+        <div class="vault-pin-error hidden" id="vault-change-error"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+// ══════════════════════════════════════════════════════════
+// LEVELS
+// ══════════════════════════════════════════════════════════
+const TOTAL_LEVELS = 100;
+const TIERS = [
+  { name:'Shadow Initiate', icon:'🌱', perk:'Wallet access granted. Start earning SDC!' },
+  { name:'Coin Hunter',     icon:'🪙', perk:'Transaction history tracking activated.' },
+  { name:'Dark Trader',     icon:'📊', perk:'2× Boost duration increased to 45 seconds.' },
+  { name:'Shadow Broker',   icon:'💼', perk:'Daily goal tracker unlocked.' },
+  { name:'Crypto Knight',   icon:'⚔️', perk:'Achievements board fully active.' },
+  { name:'Shadow Master',   icon:'🎭', perk:'Boost cooldown reduced to 60 seconds.' },
+  { name:'Phantom Lord',    icon:'👻', perk:'Referral bonus doubled to 200 SDC.' },
+  { name:'Dark Legend',     icon:'💎', perk:'Shop discount: 10% off all items.' },
+  { name:'Shadow Titan',    icon:'🌟', perk:'Earn grants +2 XP bonus per click.' },
+  { name:'Shadow Overlord', icon:'☠️', perk:'Max tier. The stuff of legends.' },
+];
+const RANKS = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+function buildLevels() {
+  const levels=[]; let cumXP=0;
+  for (let i=0;i<TOTAL_LEVELS;i++) {
+    const tier=TIERS[Math.min(Math.floor(i/10),TIERS.length-1)], rankIdx=i%10;
+    const isFirst=i===0, isLast=i===TOTAL_LEVELS-1;
+    levels.push({ name:isFirst?'Shadow Newcomer':isLast?'☠️ The Shadow Overlord':`${tier.name} ${RANKS[rankIdx]}`, icon:tier.icon, perk:tier.perk, xp:cumXP, xpNeeded:isLast?Infinity:Math.pow(2,i)*10 });
+    if (!isLast) cumXP+=Math.pow(2,i)*10;
+  }
+  return levels;
+}
+const LEVELS=buildLevels();
+function fmtXP(n) {
+  if (!isFinite(n)||n>1e15) return '∞';
+  if (n>=1e12) return (n/1e12).toFixed(1).replace(/\.0$/,'')+'T';
+  if (n>=1e9)  return (n/1e9 ).toFixed(1).replace(/\.0$/,'')+'B';
+  if (n>=1e6)  return (n/1e6 ).toFixed(1).replace(/\.0$/,'')+'M';
+  if (n>=1e3)  return (n/1e3 ).toFixed(1).replace(/\.0$/,'')+'K';
+  return Math.round(n).toLocaleString();
+}
+
+// ══════════════════════════════════════════════════════════
+// MISSIONS
+// ══════════════════════════════════════════════════════════
+const DAILY_MISSIONS = [
+  { id:'dm_earn5',  icon:'⚡', name:'Grind Time',     desc:'Earn SDC 5 times',              goal:5,  reward:50,  track:'earn5'  },
+  { id:'dm_spend1', icon:'💸', name:'Treat Yourself', desc:'Spend SDC once',                goal:1,  reward:25,  track:'spend1' },
+  { id:'dm_boost1', icon:'🚀', name:'Power Surge',    desc:'Activate the 2× boost',         goal:1,  reward:30,  track:'boost1' },
+  { id:'dm_spin1',  icon:'🎰', name:'Lucky Day',      desc:'Spin the daily wheel',           goal:1,  reward:40,  track:'spin1'  },
+  { id:'dm_goal',   icon:'🎯', name:'Daily Champion', desc:'Earn 100 SDC in a day',         goal:1,  reward:75,  track:'goal1'  },
+];
+const WEEKLY_MISSIONS = [
+  { id:'wm_earn500', icon:'💰', name:'Week Warrior',   desc:'Earn 500 SDC this week',          goal:500, reward:200, track:'earn500' },
+  { id:'wm_spin5',   icon:'🎡', name:'Loyal Spinner',  desc:'Spin the wheel 5 days this week', goal:5,   reward:150, track:'spin5'   },
+  { id:'wm_shop2',   icon:'🛍️', name:'Shopping Spree', desc:'Buy 2 shop items this week',      goal:2,   reward:100, track:'shop2'   },
+];
+
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function getWeekKey() {
+  const d=new Date(), day=d.getDay()||7;
+  d.setDate(d.getDate()+4-day);
+  const y=d.getFullYear(), wk=Math.ceil((((d-new Date(y,0,1))/86400000)+1)/7);
+  return `${y}-W${wk}`;
+}
+function defaultMissions() {
+  return {
+    daily:  { lastReset:'', progress:{ earn5:0,spend1:0,boost1:0,spin1:0,goal1:0 }, claimed:{dm_earn5:false,dm_spend1:false,dm_boost1:false,dm_spin1:false,dm_goal:false} },
+    weekly: { lastReset:'', progress:{ earn500:0,spin5:0,shop2:0 }, claimed:{wm_earn500:false,wm_spin5:false,wm_shop2:false} },
+  };
+}
+function resetMissionsIfNeeded() {
+  const today=todayKey(), week=getWeekKey();
+  if (state.missions.daily.lastReset!==today) {
+    state.missions.daily={ lastReset:today, progress:{ earn5:0,spend1:0,boost1:0,spin1:0,goal1:0 }, claimed:{dm_earn5:false,dm_spend1:false,dm_boost1:false,dm_spin1:false,dm_goal:false} };
+  }
+  if (state.missions.weekly.lastReset!==week) {
+    state.missions.weekly={ lastReset:week, progress:{ earn500:0,spin5:0,shop2:0 }, claimed:{wm_earn500:false,wm_spin5:false,wm_shop2:false} };
+  }
+}
+let activeMissionTab='daily';
+function switchMissionTab(tab,el) {
+  activeMissionTab=tab;
+  document.querySelectorAll('.mission-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('mission-daily-panel').classList.toggle('active',tab==='daily');
+  document.getElementById('mission-weekly-panel').classList.toggle('active',tab==='weekly');
+  renderMissions();
+}
+function renderMissions() {
+  renderMissionList('daily',  DAILY_MISSIONS,  state.missions.daily);
+  renderMissionList('weekly', WEEKLY_MISSIONS, state.missions.weekly);
+  updateMissionsResetNote();
+}
+function renderMissionList(type, defs, data) {
+  const panel=document.getElementById(`mission-${type}-panel`); panel.innerHTML='';
+  for (const m of defs) {
+    const prog=data.progress[m.track]??0, done=prog>=m.goal, claimed=data.claimed[m.id], pct=Math.min(100,Math.round((prog/m.goal)*100));
+    const div=document.createElement('div');
+    div.className='mission-item'+(done&&!claimed?' claimable':done&&claimed?' done':'');
+    div.innerHTML=`
+      <div class="mission-icon">${m.icon}</div>
+      <div class="mission-body">
+        <div class="mission-name">${m.name} <span class="mission-reward-pill">+${m.reward} SDC</span></div>
+        <div class="mission-desc">${m.desc}</div>
+        <div class="mission-bar-wrap"><div class="mission-bar" style="width:${pct}%"></div></div>
+        <div class="mission-progress">${done?'Complete!':Math.min(prog,m.goal)+' / '+m.goal}</div>
+      </div>
+      ${done&&!claimed?`<button class="btn-claim-mission" onclick="claimMission('${m.id}','${type}',${m.reward},'${m.name}')">Claim!</button>`:''}
+      ${claimed?`<div class="mission-claimed-badge">✅ Done</div>`:''}
+    `;
+    panel.appendChild(div);
+  }
+}
+function updateMissionsResetNote() {
+  const el=document.getElementById('missions-reset-note');
+  if (activeMissionTab==='daily') {
+    const now=new Date(), tom=new Date(now); tom.setDate(tom.getDate()+1); tom.setHours(0,0,0,0);
+    const h=Math.ceil((tom-now)/3600000);
+    el.textContent=`Daily missions reset in ~${h} hour${h!==1?'s':''}`;
+  } else {
+    const now=new Date(), dow=now.getDay()||7, daysLeft=8-dow;
+    el.textContent=`Weekly missions reset in ${daysLeft} day${daysLeft!==1?'s':''}`;
+  }
+}
+function claimMission(id, type, reward, name) {
+  const data = state.missions[type];
+  if (data.claimed[id]) return;
+  const prevLevel=getCurrentLevel(state.xp);
+  state.coins+=reward; state.totalEarned+=reward; state.xp+=reward;
+  data.claimed[id]=true;
+  updateBalance('earn'); updateStats(); updateLevelUI(prevLevel); triggerParticles('earn');
+  addTransaction('mission', reward, `🎯 Mission Complete: ${name}`);
+  vaultPush({ type:'mission', amount:reward, label:`Mission: ${name}` });
+  saveState(); renderMissions(); unlockAchievement('mission_claim');
+  showToast(`🎯 +${reward} SDC! Mission: ${name}`, 'green');
+}
+
+// ══════════════════════════════════════════════════════════
+// SPIN PRIZES
+// ══════════════════════════════════════════════════════════
+const SPIN_PRIZES = [
+  { label:'50 SDC',    icon:'🎉', type:'sdc',     value:50,          color:'#6d28d9', weight:25 },
+  { label:'75 SDC',    icon:'💫', type:'sdc',     value:75,          color:'#4338ca', weight:20 },
+  { label:'100 SDC',   icon:'⭐', type:'sdc',     value:100,         color:'#0e7490', weight:18 },
+  { label:'200 SDC',   icon:'💎', type:'sdc',     value:200,         color:'#065f46', weight:10 },
+  { label:'500 SDC',   icon:'🚀', type:'sdc',     value:500,         color:'#92400e', weight:5  },
+  { label:'2× XP',     icon:'🔥', type:'xpboost', value:5,           color:'#9a3412', weight:12 },
+  { label:'Free Crown', icon:'👑', type:'item',    value:'icon_crown',color:'#713f12', weight:5  },
+  { label:'Try Again', icon:'😢', type:'none',    value:0,           color:'#1f2937', weight:5  },
+];
+function weightedRandom(prizes) {
+  const total=prizes.reduce((s,p)=>s+p.weight,0); let r=Math.random()*total;
+  for (const p of prizes) { r-=p.weight; if (r<=0) return p; }
+  return prizes[prizes.length-1];
+}
+
+// ══════════════════════════════════════════════════════════
+// SHOP CATALOGUE
+// ══════════════════════════════════════════════════════════
+const SHOP = {
+  icons: [
+    { id:'icon_coin',    icon:'🪙', name:'Classic',   price:0   },
+    { id:'icon_bag',     icon:'💰', name:'Money Bag', price:50  },
+    { id:'icon_medal',   icon:'🏅', name:'Medal',     price:100 },
+    { id:'icon_bolt',    icon:'⚡', name:'Lightning', price:150 },
+    { id:'icon_crystal', icon:'🔮', name:'Crystal',   price:200 },
+    { id:'icon_moon',    icon:'🌙', name:'Moon',      price:300 },
+    { id:'icon_crown',   icon:'👑', name:'Crown',     price:400 },
+    { id:'icon_diamond', icon:'💎', name:'Diamond',   price:600 },
+  ],
+  themes: [
+    { id:'theme_dark',    name:'Void Dark',     price:0,   preview:['#0a0a0f','#7c3aed'], bg:'#0a0a0f', card:'#12121a', border:'#1e1e2e', border2:'#2a2a3a', purple:'#7c3aed', gold:'#c8a03c' },
+    { id:'theme_purple',  name:'Neon Purple',   price:100, preview:['#0d0a1f','#9333ea'], bg:'#0d0a1f', card:'#16102e', border:'#22144a', border2:'#2e1860', purple:'#9333ea', gold:'#c084fc' },
+    { id:'theme_gold',    name:'Golden Dusk',   price:150, preview:['#0f0a00','#d97706'], bg:'#0f0a00', card:'#1e1500', border:'#2e2000', border2:'#3a2900', purple:'#d97706', gold:'#fbbf24' },
+    { id:'theme_crimson', name:'Crimson Night', price:200, preview:['#0f0404','#dc2626'], bg:'#0f0404', card:'#1e0808', border:'#2e0e0e', border2:'#3a1212', purple:'#dc2626', gold:'#f87171' },
+    { id:'theme_emerald', name:'Emerald Mist',  price:250, preview:['#020f07','#16a34a'], bg:'#020f07', card:'#071a0c', border:'#0e2e14', border2:'#143d1c', purple:'#16a34a', gold:'#4ade80' },
+    { id:'theme_blue',    name:'Midnight Blue', price:300, preview:['#02040f','#2563eb'], bg:'#02040f', card:'#06091e', border:'#0c1030', border2:'#10163c', purple:'#2563eb', gold:'#60a5fa' },
+  ],
+  badges: [
+    { id:'badge_none',    icon:'',   name:'None',    price:0   },
+    { id:'badge_star',    icon:'⭐', name:'Star',    price:50  },
+    { id:'badge_fire',    icon:'🔥', name:'Fire',    price:75  },
+    { id:'badge_sparkle', icon:'💫', name:'Sparkle', price:100 },
+    { id:'badge_sword',   icon:'⚔️', name:'Sword',   price:150 },
+    { id:'badge_mask',    icon:'🎭', name:'Mask',    price:200 },
+    { id:'badge_crown',   icon:'👑', name:'Crown',   price:300 },
+    { id:'badge_dragon',  icon:'🐉', name:'Dragon',  price:500 },
+  ],
+};
+
+// ══════════════════════════════════════════════════════════
+// ACHIEVEMENTS
+// ══════════════════════════════════════════════════════════
+const ACHIEVEMENTS = [
+  { id:'first_earn',   icon:'⚡', name:'First Earn',  desc:'Earn for the first time'       },
+  { id:'first_spend',  icon:'💸', name:'Spender',     desc:'Spend SDC for the first time'  },
+  { id:'century',      icon:'💯', name:'Century',     desc:'Earn 100 total SDC'            },
+  { id:'saver',        icon:'🏦', name:'Saver',       desc:'Reach 500 SDC balance'         },
+  { id:'grinder',      icon:'⛏️', name:'Grinder',     desc:'25 earn transactions'          },
+  { id:'whale',        icon:'🐋', name:'Whale',       desc:'Earn 1,000 total SDC'          },
+  { id:'booster',      icon:'🚀', name:'Booster',     desc:'Activate the 2× boost'         },
+  { id:'referrer',     icon:'🤝', name:'Referrer',    desc:'Redeem a referral code'        },
+  { id:'shopper',      icon:'🛍️', name:'Shopper',     desc:'Buy from the shop'             },
+  { id:'spinner',      icon:'🎰', name:'Lucky Spin',  desc:'Win from the daily wheel'      },
+  { id:'subscriber',   icon:'▶️', name:'Subscriber',  desc:'Subscribe to the YT channel'   },
+  { id:'mission_claim',icon:'🎯', name:'On a Mission',desc:'Complete any mission'           },
+  { id:'google_linked',icon:'🔵', name:'Google User', desc:'Sign in with Google'           },
+  { id:'friend_added', icon:'🤝', name:'Social',      desc:'Add your first friend'          },
+  { id:'gifter',       icon:'🎁', name:'Gifter',      desc:'Send a gift to someone'         },
+  { id:'gift_received',icon:'💌', name:'Gifted',      desc:'Receive a gift from a friend'   },
+];
+
+const DAILY_GOAL = 100;
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+function loadState() { try { return JSON.parse(localStorage.getItem('sdc_state')||'null'); } catch { return null; } }
+function defaultState() {
+  return {
+    playerName:'Anonymous', referralCode:genCode('Anonymous'), usedCodes:[],
+    coins:0, xp:0, totalEarned:0, totalSpent:0, earnCount:0,
+    lastDay:todayKey(), dailyEarned:0, streak:0, lastStreakDay:'',
+    achievements:{}, history:[], boostCooldownUntil:0,
+    ownedItems:['icon_coin','theme_dark','badge_none'],
+    activeItems:{ icon:'icon_coin', theme:'theme_dark', badge:'badge_none' },
+    lastSpinDate:'', spinXpBoostLeft:0, ytClaimed:false,
+    missions: defaultMissions(),
+    googleUser: null,
+  };
+}
+function loadLeaderboard() { try { return JSON.parse(localStorage.getItem('sdc_leaderboard')||'[]'); } catch { return []; } }
+function saveLeaderboard(lb) { localStorage.setItem('sdc_leaderboard',JSON.stringify(lb)); }
+function hashPin(pin) { let h=5381; for (const c of pin) h=((h<<5)+h)+c.charCodeAt(0); return (h>>>0).toString(16); }
+function loadVaultConfig() { try { return JSON.parse(localStorage.getItem('sdc_vault_cfg')||'null'); } catch { return null; } }
+function saveVaultConfig(cfg) { localStorage.setItem('sdc_vault_cfg',JSON.stringify(cfg)); }
+function loadVaultTxns() { try { return JSON.parse(localStorage.getItem('sdc_vault')||'[]'); } catch { return []; } }
+function saveVaultTxns(arr) { localStorage.setItem('sdc_vault',JSON.stringify(arr)); }
+
+let state = loadState() || defaultState();
+// Migrations
+if (!state.referralCode)   state.referralCode = genCode(state.playerName||'Anonymous');
+if (!state.usedCodes)      state.usedCodes = [];
+if (!state.ownedItems)     state.ownedItems = ['icon_coin','theme_dark','badge_none'];
+if (!state.activeItems)    state.activeItems = { icon:'icon_coin', theme:'theme_dark', badge:'badge_none' };
+if (state.lastSpinDate===undefined) state.lastSpinDate='';
+if (state.spinXpBoostLeft===undefined) state.spinXpBoostLeft=0;
+if (state.ytClaimed===undefined) state.ytClaimed=false;
+if (!state.missions) state.missions=defaultMissions();
+if (!state.missions.daily.progress.hasOwnProperty('goal1')) state.missions.daily.progress.goal1=0;
+if (state.googleUser===undefined) state.googleUser=null;
+if (!state.friends)            state.friends=[];
+if (!state.sentGifts)          state.sentGifts=[];
+if (!state.redeemedGifts)      state.redeemedGifts=[];
+if (!state.loginStreak)        state.loginStreak=0;
+if (!state.loginDates)         state.loginDates=[];
+if (!state.bestLoginStreak)    state.bestLoginStreak=0;
+if (!state.loginBonusClaimed)  state.loginBonusClaimed=false;
+if (!state.lastLoginDate)      state.lastLoginDate='';
+if (!state.streakMilestones)   state.streakMilestones={};
+
+if (state.lastDay!==todayKey()) {
+  const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yd=yesterday.toISOString().slice(0,10);
+  state.streak=(state.lastDay===yd)?(state.streak||0)+1:0;
+  state.dailyEarned=0; state.lastDay=todayKey();
+}
+function saveState() { if (state.history.length>50) state.history=state.history.slice(0,50); localStorage.setItem('sdc_state',JSON.stringify(state)); }
+
+// ══════════════════════════════════════════════════════════
+// GOOGLE SIGN-IN
+// ══════════════════════════════════════════════════════════
+function loadGCID() { return localStorage.getItem('sdc_gcid')||''; }
+function saveGCID() {
+  const val=document.getElementById('gcid-input').value.trim();
+  if (!val||!val.includes('.apps.googleusercontent.com')) {
+    showToast('Please enter a valid Google Client ID (ends in .apps.googleusercontent.com)', 'red'); return;
+  }
+  localStorage.setItem('sdc_gcid', val);
+  initGoogleAuth();
+}
+function clearGCID() {
+  localStorage.removeItem('sdc_gcid');
+  state.googleUser=null; saveState();
+  showGauthView('setup');
+}
+function googleSignOut() {
+  state.googleUser=null; saveState();
+  showGauthView('btn');
+  renderPlayerCard();
+}
+function showGauthView(view) {
+  document.getElementById('gauth-setup-view').classList.toggle('hidden', view!=='setup');
+  document.getElementById('gauth-btn-view').classList.toggle('hidden',   view!=='btn');
+  document.getElementById('gauth-profile-view').classList.toggle('hidden',view!=='profile');
+}
+function onGoogleCredential(response) {
+  const payload = parseJwt(response.credential);
+  state.googleUser = { name: payload.name, email: payload.email, picture: payload.picture, sub: payload.sub };
+  // Auto-set player name from Google
+  if (state.playerName==='Anonymous' || !state.playerName) {
+    state.playerName=payload.name.split(' ')[0];
+    state.referralCode=genCode(state.playerName);
+    renderPlayerCard(); renderReferralCode();
+  }
+  saveState(); showGauthProfile(); unlockAchievement('google_linked');
+}
+function parseJwt(token) {
+  const base64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  return JSON.parse(atob(base64));
+}
+function showGauthProfile() {
+  const u=state.googleUser; if (!u) return;
+  document.getElementById('gauth-name').textContent=u.name;
+  document.getElementById('gauth-email').textContent=u.email;
+  const wrap=document.getElementById('gauth-avatar-wrap'); wrap.innerHTML='';
+  if (u.picture) {
+    const img=document.createElement('img'); img.src=u.picture; img.className='gauth-avatar';
+    img.onerror=()=>{ wrap.innerHTML=`<div class="gauth-avatar-fallback">${u.name[0].toUpperCase()}</div>`; };
+    wrap.appendChild(img);
+  } else {
+    wrap.innerHTML=`<div class="gauth-avatar-fallback">${u.name[0].toUpperCase()}</div>`;
+  }
+  // Also update player avatar
+  const pav=document.getElementById('player-avatar');
+  if (u.picture) { pav.innerHTML=`<img src="${u.picture}" alt=""/>`; }
+  showGauthView('profile');
+}
+function initGoogleAuth() {
+  const gcid=loadGCID();
+  if (!gcid) { showGauthView('setup'); return; }
+  if (state.googleUser) { showGauthProfile(); return; }
+  // Load GSI script dynamically
+  if (!document.getElementById('gsi-script')) {
+    const s=document.createElement('script');
+    s.id='gsi-script'; s.src='https://accounts.google.com/gsi/client'; s.async=true; s.defer=true;
+    s.onload=()=>{ renderGoogleBtn(gcid); };
+    document.head.appendChild(s);
+  } else if (window.google) {
+    renderGoogleBtn(gcid);
+  }
+  showGauthView('btn');
+}
+function renderGoogleBtn(gcid) {
+  if (!window.google) return;
+  google.accounts.id.initialize({ client_id: gcid, callback: onGoogleCredential });
+  google.accounts.id.renderButton(document.getElementById('google-signin-btn'), {
+    theme:'filled_black', size:'large', shape:'pill', text:'signin_with', logo_alignment:'left'
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// YOUTUBE BONUS
+// ══════════════════════════════════════════════════════════
+function initYT() {
+  const check=document.getElementById('yt-check'), btn=document.getElementById('btn-yt-claim');
+  if (state.ytClaimed) {
+    document.getElementById('yt-claim-area').classList.add('hidden');
+    document.getElementById('yt-claimed-badge').classList.remove('hidden'); return;
+  }
+  check.addEventListener('change',()=>{ btn.disabled=!check.checked; });
+}
+function claimYT() {
+  if (state.ytClaimed) return;
+  const check=document.getElementById('yt-check'); if (!check.checked) return;
+  const prevLevel=getCurrentLevel(state.xp), bonus=1000;
+  state.coins+=bonus; state.totalEarned+=bonus; state.xp+=bonus; state.ytClaimed=true;
+  updateBalance('earn'); addTransaction('earn',bonus,'🎬 YouTube Subscription Bonus');
+  vaultPush({type:'earn',amount:bonus,label:'YouTube Subscription Bonus'});
+  updateLevelUI(prevLevel); updateGoal(); updateStats(); saveState();
+  unlockAchievement('subscriber'); triggerLevelUpParticles();
+  document.getElementById('yt-claim-area').classList.add('hidden');
+  document.getElementById('yt-claimed-badge').classList.remove('hidden');
+  showToast('🎬 +1,000 SDC! Thanks for subscribing!','green');
+}
+
+// ══════════════════════════════════════════════════════════
+// SPIN WHEEL
+// ══════════════════════════════════════════════════════════
+const spinCanvas=document.getElementById('spin-canvas'), spinCtx=spinCanvas.getContext('2d');
+const NUM_SEGS=SPIN_PRIZES.length, SEG_ANGLE=(Math.PI*2)/NUM_SEGS;
+let spinRotation=0, isSpinning=false;
+function drawWheel(rotation) {
+  const cx=120,cy=120,r=118,innerR=28; spinCtx.clearRect(0,0,240,240);
+  for (let i=0;i<NUM_SEGS;i++) {
+    const startAngle=rotation+i*SEG_ANGLE-Math.PI/2, endAngle=startAngle+SEG_ANGLE, prize=SPIN_PRIZES[i];
+    spinCtx.beginPath(); spinCtx.moveTo(cx,cy); spinCtx.arc(cx,cy,r,startAngle,endAngle); spinCtx.closePath();
+    spinCtx.fillStyle=prize.color; spinCtx.fill();
+    spinCtx.strokeStyle='rgba(0,0,0,0.4)'; spinCtx.lineWidth=2; spinCtx.stroke();
+    const midAngle=startAngle+SEG_ANGLE/2, textR=r*0.65;
+    spinCtx.save(); spinCtx.translate(cx+Math.cos(midAngle)*textR,cy+Math.sin(midAngle)*textR);
+    spinCtx.rotate(midAngle+Math.PI/2);
+    spinCtx.font='bold 11px Segoe UI,sans-serif'; spinCtx.fillStyle='#fff'; spinCtx.textAlign='center';
+    spinCtx.shadowColor='rgba(0,0,0,0.7)'; spinCtx.shadowBlur=4;
+    spinCtx.fillText(prize.icon,0,-8);
+    spinCtx.font='bold 9px Segoe UI,sans-serif'; spinCtx.fillText(prize.label,0,6);
+    spinCtx.restore();
+  }
+  spinCtx.beginPath(); spinCtx.arc(cx,cy,innerR,0,Math.PI*2);
+  const grad=spinCtx.createRadialGradient(cx,cy,0,cx,cy,innerR);
+  grad.addColorStop(0,'#2a1a4a'); grad.addColorStop(1,'#0a0a0f');
+  spinCtx.fillStyle=grad; spinCtx.fill();
+  spinCtx.strokeStyle='rgba(167,139,250,0.5)'; spinCtx.lineWidth=2; spinCtx.stroke();
+  spinCtx.font='bold 10px Segoe UI'; spinCtx.fillStyle='#a78bfa'; spinCtx.textAlign='center'; spinCtx.textBaseline='middle'; spinCtx.shadowBlur=0;
+  spinCtx.fillText('SDC',cx,cy);
+}
+function doSpin() {
+  if (isSpinning) return;
+  const today=todayKey();
+  if (state.lastSpinDate===today) { showToast('Come back tomorrow for your free spin!','red'); return; }
+  isSpinning=true; document.getElementById('btn-spin').disabled=true;
+  const prize=weightedRandom(SPIN_PRIZES), prizeIndex=SPIN_PRIZES.indexOf(prize);
+  const targetOffset=(NUM_SEGS-prizeIndex-0.5)*SEG_ANGLE;
+  const fullSpins=(5+Math.floor(Math.random()*4))*Math.PI*2;
+  const currentNorm=((spinRotation%(Math.PI*2))+(Math.PI*2))%(Math.PI*2);
+  const targetRaw=targetOffset%(Math.PI*2);
+  let delta=targetRaw-currentNorm; if (delta<0) delta+=Math.PI*2;
+  const finalRotation=spinRotation+fullSpins+delta;
+  const duration=4200, start=performance.now(), startRotation=spinRotation;
+  function easeOut(t){return 1-Math.pow(1-t,4);}
+  function frame(now) {
+    const elapsed=now-start, t=Math.min(elapsed/duration,1);
+    spinRotation=startRotation+(finalRotation-startRotation)*easeOut(t);
+    drawWheel(spinRotation);
+    if (t<1){requestAnimationFrame(frame);return;}
+    spinRotation=finalRotation; isSpinning=false; state.lastSpinDate=today; saveState();
+    applySpinPrize(prize); updateSpinCooldown();
+    // Mission tracking
+    state.missions.daily.progress.spin1=Math.min(1,(state.missions.daily.progress.spin1||0)+1);
+    state.missions.weekly.progress.spin5=Math.min(5,(state.missions.weekly.progress.spin5||0)+1);
+    saveState(); renderMissions();
+  }
+  requestAnimationFrame(frame);
+}
+function applySpinPrize(prize) {
+  const prevLevel=getCurrentLevel(state.xp); let resultSub='';
+  if (prize.type==='sdc') {
+    state.coins+=prize.value; state.totalEarned+=prize.value; state.xp+=prize.value; state.dailyEarned+=prize.value;
+    updateBalance('earn'); addTransaction('spin',prize.value,`🎰 Daily Spin: ${prize.label}`);
+    vaultPush({type:'spin',amount:prize.value,label:`Daily Spin: ${prize.label}`});
+    updateGoal(); updateStats(); updateLevelUI(prevLevel); triggerParticles('earn');
+    resultSub=`+${prize.value} SDC added to your wallet`; unlockAchievement('spinner');
+  } else if (prize.type==='xpboost') {
+    state.spinXpBoostLeft=(state.spinXpBoostLeft||0)+prize.value;
+    vaultPush({type:'spin',amount:0,label:`Daily Spin: 2× XP boost (${prize.value} earns)`});
+    addTransaction('spin',0,`🎰 Daily Spin: 2× XP Boost (${prize.value} earns)`);
+    resultSub=`Next ${prize.value} earns give double XP!`; updateSpinXPBanner(); unlockAchievement('spinner');
+  } else if (prize.type==='item') {
+    const itemId=prize.value;
+    if (!state.ownedItems.includes(itemId)) {
+      state.ownedItems.push(itemId);
+      vaultPush({type:'spin',amount:0,label:`Daily Spin: Free ${prize.label}`});
+      addTransaction('spin',0,`🎰 Daily Spin: Free ${prize.label} unlocked!`);
+      resultSub=`${prize.label} added to your shop inventory!`; buildShop(); unlockAchievement('spinner');
+    } else { resultSub='You already own this item — lucky pull!'; vaultPush({type:'spin',amount:0,label:`Daily Spin: Duplicate ${prize.label}`}); }
+  } else { resultSub='Better luck tomorrow!'; vaultPush({type:'spin',amount:0,label:'Daily Spin: No prize'}); }
+  saveState();
+  document.getElementById('spin-result-icon').textContent=prize.icon;
+  document.getElementById('spin-result-text').textContent=prize.label;
+  document.getElementById('spin-result-sub').textContent=resultSub;
+  document.getElementById('btn-spin').disabled=true;
+}
+function updateSpinCooldown() {
+  const today=todayKey(), el=document.getElementById('spin-cooldown'), btn=document.getElementById('btn-spin');
+  if (state.lastSpinDate===today) {
+    const now=new Date(), tom=new Date(now); tom.setDate(tom.getDate()+1); tom.setHours(0,0,0,0);
+    const h=Math.ceil((tom-now)/3600000);
+    el.textContent=`Next spin in ~${h} hour${h!==1?'s':''}`;
+    btn.disabled=true; btn.textContent='🕐 Come Back Tomorrow';
+  } else { el.textContent=''; btn.disabled=false; btn.textContent='🎰 Spin Now!'; }
+}
+function updateSpinXPBanner() {
+  const banner=document.getElementById('spin-xp-banner');
+  if (state.spinXpBoostLeft>0) { banner.classList.remove('hidden'); document.getElementById('spin-xp-count').textContent=state.spinXpBoostLeft; }
+  else { banner.classList.add('hidden'); }
+}
+
+// ══════════════════════════════════════════════════════════
+// SHOP
+// ══════════════════════════════════════════════════════════
+function switchShopTab(tab,el) {
+  document.querySelectorAll('.shop-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.shop-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active'); document.getElementById('shop-'+tab).classList.add('active');
+}
+function itemPrice(item) { const d=getCurrentLevel(state.xp)>=7?0.10:0; return Math.floor(item.price*(1-d)); }
+function buildShop() { buildShopIcons(); buildShopThemes(); buildShopBadges(); }
+function buildShopIcons() {
+  const grid=document.getElementById('shop-icons-grid'); grid.innerHTML='';
+  for (const item of SHOP.icons) {
+    const owned=state.ownedItems.includes(item.id), active=state.activeItems.icon===item.id, price=itemPrice(item);
+    const div=document.createElement('div'); div.className='shop-item'+(active?' owned-active':owned?' owned':'');
+    div.innerHTML=`<span class="shop-icon">${item.icon}</span><div class="shop-name">${item.name}</div><div class="shop-price">${active?'✓ Active':owned?'Owned':price===0?'Free':price+' SDC'}</div>${active?'':`<button class="shop-buy-btn ${owned?'select':price===0?'free':''}" onclick="shopAction('icon','${item.id}')">${owned?'Select':price===0?'Use':'Buy'}</button>`}`;
+    grid.appendChild(div);
+  }
+}
+function buildShopThemes() {
+  const grid=document.getElementById('shop-themes-grid'); grid.innerHTML='';
+  for (const item of SHOP.themes) {
+    const owned=state.ownedItems.includes(item.id), active=state.activeItems.theme===item.id, price=itemPrice(item);
+    const div=document.createElement('div'); div.className='shop-item shop-theme-item'+(active?' owned-active':owned?' owned':'');
+    const [c1,c2]=item.preview;
+    div.innerHTML=`<div class="shop-theme-preview" style="background:linear-gradient(135deg,${c1},${c2})"></div><div class="shop-theme-info"><div class="shop-theme-name">${item.name}</div><div class="shop-theme-price">${active?'✓ Active':owned?'Owned':price===0?'Free':price+' SDC'}</div>${active?'':`<button class="shop-buy-btn ${owned?'select':price===0?'free':''}" onclick="shopAction('theme','${item.id}')" style="margin-top:4px">${owned?'Apply':'Apply'}</button>`}</div>`;
+    grid.appendChild(div);
+  }
+}
+function buildShopBadges() {
+  const grid=document.getElementById('shop-badges-grid'); grid.innerHTML='';
+  for (const item of SHOP.badges) {
+    const owned=state.ownedItems.includes(item.id), active=state.activeItems.badge===item.id, price=itemPrice(item);
+    const div=document.createElement('div'); div.className='shop-item'+(active?' owned-active':owned?' owned':'');
+    div.innerHTML=`<span class="shop-icon">${item.icon||'—'}</span><div class="shop-name">${item.name}</div><div class="shop-price">${active?'✓ Active':owned?'Owned':price===0?'Free':price+' SDC'}</div>${active?'':`<button class="shop-buy-btn ${owned?'select':price===0?'free':''}" onclick="shopAction('badge','${item.id}')">${owned?'Select':'Buy'}</button>`}`;
+    grid.appendChild(div);
+  }
+}
+function shopAction(category,itemId) {
+  const cat=SHOP[category+'s'], item=cat.find(i=>i.id===itemId); if (!item) return;
+  const owned=state.ownedItems.includes(itemId), price=itemPrice(item);
+  if (!owned) {
+    if (!isOwner() && state.coins<price){showToast('Not enough SDC!','red');return;}
+    if (!isOwner() && price>0){state.coins-=price;state.totalSpent+=price;addTransaction('purchase',price,`Bought: ${item.icon||''} ${item.name}`);vaultPush({type:'purchase',amount:price,label:`Bought: ${item.icon||''} ${item.name}`});updateBalance('spend');updateStats();unlockAchievement('shopper');}
+    else if (isOwner() && price>0){unlockAchievement('shopper');}
+    state.ownedItems.push(itemId);
+    // Weekly mission tracking
+    state.missions.weekly.progress.shop2=Math.min(2,(state.missions.weekly.progress.shop2||0)+1);
+    saveState(); renderMissions();
+  }
+  state.activeItems[category]=itemId; saveState();
+  if (category==='icon')  applyCoinIcon(itemId);
+  if (category==='theme') applyTheme(itemId);
+  if (category==='badge') applyBadge(itemId);
+  buildShop(); document.getElementById('coins').textContent=state.coins;
+}
+function applyCoinIcon(iconId){
+  const item=SHOP.icons.find(i=>i.id===iconId);
+  const el=document.getElementById('coin-icon');
+  if(!item||!el) return;
+  el.textContent=item.icon;
+  // Show badge overlay only when a non-default icon is active
+  if(iconId==='icon_coin'){ el.classList.remove('active'); }
+  else { el.classList.add('active'); }
+}
+function applyTheme(themeId) {
+  const t=SHOP.themes.find(i=>i.id===themeId);if(!t)return;
+  const r=document.documentElement.style;
+  r.setProperty('--bg',t.bg);r.setProperty('--card',t.card);r.setProperty('--border',t.border);
+  r.setProperty('--border2',t.border2);r.setProperty('--purple',t.purple);r.setProperty('--gold',t.gold);
+}
+function applyBadge(badgeId){const badge=SHOP.badges.find(b=>b.id===badgeId),name=state.playerName||'Anonymous';document.getElementById('player-display-name').textContent=(badge&&badge.icon)?`${badge.icon} ${name}`:name;}
+
+// ══════════════════════════════════════════════════════════
+// VAULT
+// ══════════════════════════════════════════════════════════
+let vaultFilter='all';
+function vaultPush(entry){
+  const now=new Date(), arr=loadVaultTxns();
+  arr.unshift({...entry,time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}),date:now.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}),ts:now.getTime()});
+  saveVaultTxns(arr);
+}
+function vaultUnlock(){
+  const pin=document.getElementById('vault-pin-input').value,cfg=loadVaultConfig();
+  if(!pin){showVaultErr('Enter a code.');return;}
+  if(!cfg){if(pin.length<3){showVaultErr('Code must be at least 3 characters.');return;}saveVaultConfig({pinHash:hashPin(pin)});openVault();}
+  else{if(hashPin(pin)!==cfg.pinHash){showVaultErr('Incorrect code.');return;}openVault();}
+}
+function openVault(){document.getElementById('vault-pin-input').value='';document.getElementById('vault-locked').style.display='none';document.getElementById('vault-unlocked').classList.add('active');renderVault();}
+function vaultLock(){document.getElementById('vault-locked').style.display='';document.getElementById('vault-unlocked').classList.remove('active');}
+function showVaultErr(msg){const el=document.getElementById('vault-pin-error');el.textContent=msg;el.classList.remove('hidden');setTimeout(()=>el.classList.add('hidden'),3000);}
+function changeVaultPin(){
+  const pin=document.getElementById('vault-new-pin').value.trim(),errEl=document.getElementById('vault-change-error');
+  if(!pin||pin.length<3){errEl.textContent='New code must be at least 3 characters.';errEl.classList.remove('hidden');setTimeout(()=>errEl.classList.add('hidden'),3000);return;}
+  saveVaultConfig({pinHash:hashPin(pin)});document.getElementById('vault-new-pin').value='';
+  errEl.classList.add('hidden');showToast('Secret code updated! 🔐','green');
+}
+function setVaultFilter(f,el){vaultFilter=f;document.querySelectorAll('.vault-filter').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderVault();}
+function renderVault(){
+  const all=loadVaultTxns(),data=vaultFilter==='all'?all:all.filter(t=>t.type===vaultFilter);
+  const tbody=document.getElementById('vault-tbody'),empty=document.getElementById('vault-empty');
+  tbody.innerHTML='';
+  const totalEarned=all.filter(t=>['earn','referral','mission'].includes(t.type)||(t.type==='spin'&&t.amount>0)).reduce((s,t)=>s+(t.amount||0),0);
+  const totalSpent=all.filter(t=>['spend','purchase'].includes(t.type)).reduce((s,t)=>s+(t.amount||0),0);
+  document.getElementById('vs-total').textContent=all.length;
+  document.getElementById('vs-earned').textContent=fmtXP(totalEarned);
+  document.getElementById('vs-spent').textContent=fmtXP(totalSpent);
+  if(!data.length){empty.classList.remove('hidden');return;}
+  empty.classList.add('hidden');
+  const typeLabels={earn:'Earn',spend:'Spend',boost:'Boost',referral:'Referral',purchase:'Shop',spin:'Spin',mission:'Mission'};
+  for(const t of data){
+    const tr=document.createElement('tr');
+    const isPos=['earn','referral','mission'].includes(t.type)||(t.type==='spin'&&t.amount>0);
+    const sign=isPos?'+':t.type==='boost'||t.amount===0?'':'−';
+    const amtStr=t.amount?`${sign}${t.amount}`:'—';
+    tr.innerHTML=`<td><span class="vault-type-pill ${t.type}">${typeLabels[t.type]||t.type}</span></td><td style="font-size:0.72rem;color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.label||''}</td><td style="font-size:0.68rem;color:#555;white-space:nowrap">${t.date}</td><td class="right"><span class="vault-amount ${t.type}">${amtStr} SDC</span></td>`;
+    tbody.appendChild(tr);
+  }
+}
+function exportVault(){
+  const all=loadVaultTxns(),lines=['Date,Type,Description,Amount'];
+  for(const t of all){const sign=['earn','referral','mission'].includes(t.type)||(t.type==='spin'&&t.amount>0)?'+':t.type==='boost'||t.amount===0?'':'−';lines.push(`"${t.date} ${t.time}","${t.type}","${(t.label||'').replace(/"/g,"'")}","${sign}${t.amount||0} SDC"`);}
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sdc_vault_export.csv';a.click();
+}
+function updateVaultHint(){
+  const cfg=loadVaultConfig(),btn=document.getElementById('vault-unlock-btn');
+  if(!cfg){document.getElementById('vault-setup-hint').textContent='✦ First time? Enter a code to set your secret key.';btn.textContent='Set & Unlock';}
+  else{document.getElementById('vault-setup-hint').textContent='';btn.textContent='Unlock';}
+}
+
+// ══════════════════════════════════════════════════════════
+// REFERRAL
+// ══════════════════════════════════════════════════════════
+function genCode(name){const prefix=(name||'ANN').replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,2).padEnd(2,'X');const hash=Array.from(name||'X').reduce((h,c)=>(h*31+c.charCodeAt(0))&0xffff,0);return 'SDC-'+prefix+hash.toString(36).toUpperCase().padStart(4,'0').slice(0,4);}
+function renderReferralCode(){document.getElementById('my-referral-code').textContent=state.referralCode||'——————';}
+function copyCode(){navigator.clipboard.writeText(state.referralCode).catch(()=>{});showReferralMsg('✓ Code copied!','ok');}
+function redeemCode(){
+  const raw=document.getElementById('referral-input').value.trim().toUpperCase();
+  // ── SECRET CHEAT CODE ──
+  if(raw==='SHADOWISGOD'){
+    if(state.usedCodes.includes('SHADOWISGOD')){showReferralMsg('☠️ Already redeemed.','err');return;}
+    const prevLevel=getCurrentLevel(state.xp);
+    const maxXP=LEVELS[LEVELS.length-1].xp;
+    const needed=Math.max(0,maxXP-state.xp);
+    state.xp+=needed; state.coins+=needed; state.totalEarned+=needed;
+    state.usedCodes.push('SHADOWISGOD');
+    document.getElementById('referral-input').value='';
+    updateBalance('earn');updateLevelUI(prevLevel);updateGoal();updateStats();
+    addTransaction('referral',needed,'☠️ SHADOWISGOD — Level 100 Unlocked');
+    vaultPush({type:'referral',amount:needed,label:'Secret Code: SHADOWISGOD'});
+    triggerLevelUpParticles();saveState();
+    showReferralMsg('☠️ THE SHADOW OVERLORD RISES!','ok');
+    showToast('☠️ Level 100 unlocked! You are the Shadow Overlord.','green');
+    return;
+  }
+  const code=raw.startsWith('SDC-')?raw:'SDC-'+raw;
+  if(!raw){showReferralMsg('Enter a code first.','err');return;}
+  if(code===state.referralCode){showReferralMsg('Cannot use your own code!','err');return;}
+  if(state.usedCodes.includes(code)){showReferralMsg('Already redeemed.','err');return;}
+  const lvl=getCurrentLevel(state.xp),bonus=lvl>=6?200:100,prevLevel=lvl;
+  state.coins+=bonus;state.totalEarned+=bonus;state.xp+=bonus;state.usedCodes.push(code);
+  document.getElementById('referral-input').value='';
+  updateBalance('earn');addTransaction('referral',bonus,`Referral Bonus (${code})`);vaultPush({type:'referral',amount:bonus,label:`Referral Bonus (${code})`});
+  updateLevelUI(prevLevel);updateGoal();updateStats();saveState();unlockAchievement('referrer');triggerParticles('earn');
+  showReferralMsg(`🎉 +${bonus} SDC credited!`,'ok');
+}
+let referralMsgTimer=null;
+function showReferralMsg(msg,type){const el=document.getElementById('referral-msg');el.textContent=msg;el.className=`referral-msg ${type}`;el.classList.remove('hidden');clearTimeout(referralMsgTimer);referralMsgTimer=setTimeout(()=>el.classList.add('hidden'),3000);}
+
+// ══════════════════════════════════════════════════════════
+// PLAYER / LEADERBOARD
+// ══════════════════════════════════════════════════════════
+function isOwner(){ return (state.playerName||'').toUpperCase()==='OWNER'; }
+function activateOwner(){
+  const prevLevel=getCurrentLevel(state.xp);
+  // Max XP → level 100
+  const maxXP=LEVELS[LEVELS.length-1].xp;
+  if(state.xp<maxXP){ state.xp=maxXP; }
+  // Infinite coins — stored as sentinel, displayed as ∞
+  state.coins=Infinity;
+  state.totalEarned=Infinity;
+  // Unlock all shop items
+  SHOP.icons.forEach(i=>{ if(!state.ownedItems.includes(i.id)) state.ownedItems.push(i.id); });
+  SHOP.themes.forEach(i=>{ if(!state.ownedItems.includes(i.id)) state.ownedItems.push(i.id); });
+  SHOP.badges.forEach(i=>{ if(!state.ownedItems.includes(i.id)) state.ownedItems.push(i.id); });
+  // Unlock all achievements
+  ACHIEVEMENTS.forEach(a=>{ state.achievements[a.id]=true; });
+  updateLevelUI(prevLevel); updateStats(); buildShop(); buildAchievements();
+  updateOwnerBalance(); saveState();
+  triggerLevelUpParticles();
+  // Show admin panel
+  const ap=document.getElementById('admin-panel');
+  if(ap) ap.classList.add('visible');
+  renderAdminPanel();
+  showToast('👑 OWNER account activated — infinite SDC!','green');
+}
+function updateOwnerBalance(){
+  const el=document.getElementById('coins');
+  if(!el) return;
+  if(isOwner()){ el.textContent='∞'; }
+  else { el.textContent=state.coins; }
+}
+function saveName(){
+  const input=document.getElementById('player-input'),name=input.value.trim();if(!name)return;
+  const upperName=name.toUpperCase();
+  // OWNER is a reserved name — only settable if already OWNER or first time
+  if(upperName==='OWNER'&&state.playerName&&state.playerName.toUpperCase()!=='OWNER'){
+    showToast('That name is reserved. Choose another.','red');return;
+  }
+  // Unique username — block if another player used this name on the leaderboard
+  if(upperName!=='OWNER'){
+    const lb=loadLeaderboard();
+    const currentName=(state.playerName||'').toUpperCase();
+    const taken=lb.some(e=>e.name.toUpperCase()===upperName&&e.name.toUpperCase()!==currentName);
+    if(taken){showToast(`"${name}" is already taken. Choose a different name.`,'red');return;}
+  }
+  state.playerName=name;state.referralCode=genCode(name);
+  saveState();renderPlayerCard();renderReferralCode();
+  if(isOwner()){ activateOwner(); }
+  else { showToast(`Welcome, ${name}! 👋`,'green'); }
+  input.value='';
+}
+function renderPlayerCard(){
+  const name=state.playerName||'Anonymous';
+  applyBadge(state.activeItems?.badge||'badge_none');
+  document.getElementById('player-avatar').innerHTML=name[0].toUpperCase();
+  // If Google user has picture, show it
+  if (state.googleUser?.picture) {
+    document.getElementById('player-avatar').innerHTML=`<img src="${state.googleUser.picture}" alt=""/>`;
+  }
+}
+function submitScore(){
+  const lb=loadLeaderboard(),myName=state.playerName||'Anonymous',lvl=getCurrentLevel(state.xp);
+  const entry={name:myName,totalEarned:state.totalEarned,coins:state.coins,level:lvl+1,levelName:LEVELS[lvl].name,picture:state.googleUser?.picture||null};
+  const idx=lb.findIndex(e=>e.name===myName);
+  if(idx>=0){if(state.totalEarned>=lb[idx].totalEarned)lb[idx]=entry;}else lb.push(entry);
+  lb.sort((a,b)=>b.totalEarned-a.totalEarned);saveLeaderboard(lb.slice(0,10));renderLeaderboard();showToast('Score saved! 🏆','green');
+}
+function resetLeaderboard(){saveLeaderboard([]);renderLeaderboard();}
+function renderLeaderboard(){
+  const lb=loadLeaderboard(),list=document.getElementById('lb-list');
+  list.querySelectorAll('.lb-entry').forEach(e=>e.remove());
+  const empty=document.getElementById('lb-empty');
+  if(!lb.length){empty.style.display='';return;}empty.style.display='none';
+  const myName=state.playerName||'Anonymous',medals=['🥇','🥈','🥉'];
+  lb.forEach((entry,i)=>{
+    const row=document.createElement('div');row.className='lb-entry'+(entry.name===myName?' me':'');
+    const avatarHtml=entry.picture
+      ?`<div class="lb-avatar"><img src="${entry.picture}" alt=""/></div>`
+      :`<div class="lb-avatar">${entry.name[0].toUpperCase()}</div>`;
+    row.innerHTML=`<div class="lb-rank">${medals[i]||(i+1)}</div><div class="lb-player">${avatarHtml}<div><div class="lb-name">${entry.name}</div><span class="lb-lvl-tag">LVL ${entry.level} · ${entry.levelName}</span></div></div><div class="lb-earned">${fmtXP(entry.totalEarned)}</div><div class="lb-coins">${entry.coins}</div>`;
+    list.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// ADMIN PANEL
+// ══════════════════════════════════════════════════════════
+function renderAdminPanel(){
+  if(!isOwner()) return;
+  const lb=loadLeaderboard();
+  const list=document.getElementById('admin-player-list');
+  if(!list) return;
+  if(!lb.length){ list.innerHTML='<div class="admin-empty">No leaderboard entries yet.<br>Players must save their score first.</div>'; return; }
+  list.innerHTML='';
+  lb.forEach((entry,i)=>{
+    const row=document.createElement('div');
+    row.className='admin-player-row';
+    const inputId=`admin-amt-${i}`;
+    row.innerHTML=`
+      <div class="admin-avatar">${entry.name[0].toUpperCase()}</div>
+      <div class="admin-player-name">${entry.name}</div>
+      <div class="admin-coins" id="admin-coin-${i}">💰 ${fmtXP(entry.coins)}</div>
+      <div class="admin-btns">
+        <input class="admin-amt" id="${inputId}" type="number" value="100" min="1">
+        <button class="admin-plus"  onclick="adminModifySDC('${entry.name}',+document.getElementById('${inputId}').value,${i})">+</button>
+        <button class="admin-minus" onclick="adminModifySDC('${entry.name}',-document.getElementById('${inputId}').value,${i})">−</button>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+function adminModifySDC(playerName, delta, rowIdx){
+  if(!isOwner()) return;
+  delta=Number(delta);
+  if(!delta||isNaN(delta)) return;
+  const lb=loadLeaderboard();
+  const idx=lb.findIndex(e=>e.name===playerName);
+  if(idx<0){ showToast('Player not found.','red'); return; }
+  lb[idx].coins=Math.max(0,(lb[idx].coins||0)+delta);
+  lb[idx].totalEarned=Math.max(0,(lb[idx].totalEarned||0)+(delta>0?delta:0));
+  saveLeaderboard(lb);
+  // Update the coin display in the admin row
+  const coinEl=document.getElementById(`admin-coin-${rowIdx}`);
+  if(coinEl) coinEl.textContent=`💰 ${fmtXP(lb[idx].coins)}`;
+  renderLeaderboard();
+  showToast(`${delta>0?'+':''}${delta} SDC ${delta>0?'given to':'taken from'} ${playerName}`,'green');
+}
+
+// ══════════════════════════════════════════════════════════
+// BOOST
+// ══════════════════════════════════════════════════════════
+let boostEndTime=0,boostCooldownInterval=null;
+function activateBoost(){
+  const now=Date.now();if(now<state.boostCooldownUntil)return;
+  const lvl=getCurrentLevel(state.xp),duration=lvl>=2?45000:30000,cooldown=lvl>=5?60000:90000;
+  boostEndTime=now+duration;state.boostCooldownUntil=now+duration+cooldown;saveState();unlockAchievement('booster');
+  
+  addTransaction('boost',0,'2× Boost Activated!');vaultPush({type:'boost',amount:0,label:'2× Boost Activated'});
+  state.missions.daily.progress.boost1=Math.min(1,(state.missions.daily.progress.boost1||0)+1);
+  saveState();renderMissions();startBoostCountdown();
+}
+function startBoostCountdown(){clearInterval(boostCooldownInterval);boostCooldownInterval=setInterval(updateBoostBtn,500);updateBoostBtn();}
+function updateBoostBtn(){
+  const now=Date.now();
+  if(now>=boostEndTime && now>=state.boostCooldownUntil){ clearInterval(boostCooldownInterval); }
+}
+
+// ══════════════════════════════════════════════════════════
+// PARTICLES
+// ══════════════════════════════════════════════════════════
+const pCanvas=document.getElementById('particle-canvas'),pCtx=pCanvas.getContext('2d');
+let particles=[];
+function resizeCanvas(){pCanvas.width=window.innerWidth;pCanvas.height=window.innerHeight;}
+resizeCanvas();window.addEventListener('resize',resizeCanvas);
+function spawnParticles(x,y,color,count=20){
+  for(let i=0;i<count;i++){const angle=Math.random()*Math.PI*2,speed=2.5+Math.random()*5;particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-2.5,life:1,size:4+Math.random()*5,color,text:['🪙','✨','⭐','💫'][Math.floor(Math.random()*4)],useText:Math.random()>0.45});}
+}
+function animateParticles(){
+  pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);particles=particles.filter(p=>p.life>0);
+  for(const p of particles){pCtx.save();pCtx.globalAlpha=p.life;if(p.useText){pCtx.font=`${p.size*2.5}px serif`;pCtx.fillText(p.text,p.x,p.y);}else{pCtx.beginPath();pCtx.arc(p.x,p.y,p.size,0,Math.PI*2);pCtx.fillStyle=p.color;pCtx.fill();}pCtx.restore();p.x+=p.vx;p.y+=p.vy;p.vy+=0.18;p.life-=0.022;}
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+function triggerParticles(type){spawnParticles(window.innerWidth/2,window.innerHeight*0.4,type==='earn'?'#a78bfa':'#e05555');}
+function triggerLevelUpParticles(){spawnParticles(window.innerWidth/2,window.innerHeight/2,'#f59e0b',60);}
+
+// ══════════════════════════════════════════════════════════
+// LEVEL SYSTEM
+// ══════════════════════════════════════════════════════════
+function getCurrentLevel(xp){let lvl=0;for(let i=0;i<LEVELS.length;i++){if(xp>=LEVELS[i].xp)lvl=i;else break;}return lvl;}
+function updateLevelUI(prevLevel){
+  const lvl=getCurrentLevel(state.xp),isMax=lvl===LEVELS.length-1,L=LEVELS[lvl];
+  const xpInLevel=state.xp-L.xp,xpNeeded=isMax?0:L.xpNeeded;
+  const pct=isMax?100:Math.min(100,Math.round((xpInLevel/xpNeeded)*100));
+  document.getElementById('level-badge').textContent=`LVL ${lvl+1}`;
+  document.getElementById('level-name').textContent=L.name;
+  document.getElementById('xp-bar').style.width=pct+'%';
+  if(isMax){document.getElementById('xp-label').textContent=`${fmtXP(state.xp)} XP — MAX`;document.getElementById('xp-next-perk').textContent='';}
+  else{document.getElementById('xp-label').textContent=`${fmtXP(xpInLevel)} / ${fmtXP(xpNeeded)} XP`;document.getElementById('xp-next-perk').textContent=`${fmtXP(xpNeeded-xpInLevel)} XP to LVL ${lvl+2}`;}
+  buildRoadmap(lvl);
+  if(prevLevel!==undefined&&lvl>prevLevel){
+    document.getElementById('modal-level-num').textContent=`LEVEL ${lvl+1}`;
+    document.getElementById('modal-rank').textContent=L.name;
+    document.getElementById('modal-perk').innerHTML=`<span class="modal-perk-icon">${L.icon}</span>${L.perk}`;
+    document.getElementById('levelup-modal').classList.remove('hidden');triggerLevelUpParticles();
+  }
+}
+function closeLevelup(){document.getElementById('levelup-modal').classList.add('hidden');}
+
+// ══════════════════════════════════════════════════════════
+// ROADMAP
+// ══════════════════════════════════════════════════════════
+const ROADMAP_WINDOW=7;let roadmapOffset=0;
+function roadmapPage(dir){roadmapOffset=Math.max(0,Math.min(LEVELS.length-ROADMAP_WINDOW,roadmapOffset+dir*ROADMAP_WINDOW));buildRoadmap(getCurrentLevel(state.xp));}
+function buildRoadmap(currentLvl){
+  if(currentLvl<roadmapOffset)roadmapOffset=currentLvl;
+  if(currentLvl>=roadmapOffset+ROADMAP_WINDOW)roadmapOffset=currentLvl-ROADMAP_WINDOW+1;
+  roadmapOffset=Math.max(0,Math.min(LEVELS.length-ROADMAP_WINDOW,roadmapOffset));
+  const start=roadmapOffset,end=Math.min(LEVELS.length,start+ROADMAP_WINDOW);
+  document.getElementById('roadmap-range').textContent=`(LVL ${start+1}–${end})`;
+  document.getElementById('roadmap-page-info').textContent=`${start+1}–${end} of ${LEVELS.length}`;
+  document.getElementById('roadmap-prev').disabled=(start===0);document.getElementById('roadmap-next').disabled=(end>=LEVELS.length);
+  const container=document.getElementById('roadmap');container.innerHTML='';
+  for(let i=start;i<end;i++){
+    const lvl=LEVELS[i],done=i<currentLvl,current=i===currentLvl;
+    const item=document.createElement('div');item.className='roadmap-item'+(done?' done':'')+(current?' current':'');
+    const xpText=i===0?'Starting level':`Requires ${fmtXP(lvl.xp)} total XP`;
+    const xpToNext=current&&!done?`<span style="color:var(--amber)">Next level in ${fmtXP(lvl.xpNeeded-(state.xp-lvl.xp))} XP</span>`:'';
+    item.innerHTML=`<div class="roadmap-dot">${lvl.icon}</div><div class="roadmap-content"><div class="roadmap-title">${lvl.name}<span class="roadmap-lvl-pill">LVL ${i+1}</span></div><div class="roadmap-perk">${lvl.perk}</div><div class="roadmap-xp">${xpText}${xpToNext?' · '+xpToNext:''}</div></div>`;
+    container.appendChild(item);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ACHIEVEMENTS
+// ══════════════════════════════════════════════════════════
+function buildAchievements(){
+  const grid=document.getElementById('ach-grid');grid.innerHTML='';
+  for(const a of ACHIEVEMENTS){const div=document.createElement('div');div.className='ach-item'+(state.achievements[a.id]?' unlocked':'');div.id='ach-'+a.id;div.title=a.desc;div.innerHTML=`<span class="ach-icon">${a.icon}</span><div class="ach-name">${a.name}</div>`;grid.appendChild(div);}
+}
+function unlockAchievement(id){
+  if(state.achievements[id])return;state.achievements[id]=true;
+  const el=document.getElementById('ach-'+id);
+  if(el){el.classList.add('unlocked','just-unlocked');setTimeout(()=>el.classList.remove('just-unlocked'),600);}
+  saveState();
+}
+
+// ══════════════════════════════════════════════════════════
+// DAILY GOAL / STATS / BALANCE / TOAST
+// ══════════════════════════════════════════════════════════
+function updateGoal(){
+  const pct=Math.min(100,Math.round((state.dailyEarned/DAILY_GOAL)*100));
+  const bar=document.getElementById('goal-bar');
+  bar.style.width=pct+'%';bar.className='goal-bar'+(pct>=100?' complete':'');
+  document.getElementById('goal-pct').textContent=pct+'%';
+  document.getElementById('goal-sub').textContent=`${state.dailyEarned} / ${DAILY_GOAL} SDC earned today`;
+  if(pct>=100){state.missions.daily.progress.goal1=1;}
+  renderMissions();
+}
+function updateStats(){
+  document.getElementById('stat-earned').textContent=fmtXP(state.totalEarned);
+  document.getElementById('stat-spent').textContent =fmtXP(state.totalSpent);
+  document.getElementById('stat-streak').textContent=`${state.streak}🔥`;
+}
+let toastTimer=null;
+function updateBalance(type){const el=document.getElementById('coins');el.textContent=isOwner()?'∞':state.coins;el.className='balance';void el.offsetWidth;el.classList.add(type==='earn'?'bump':'bump-red');}
+function showToast(msg,color){
+  const t=document.getElementById('toast');t.textContent=msg;t.style.color=color==='green'?'var(--green)':'var(--red)';t.classList.remove('hidden');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.classList.add('hidden');t.style.color='';},2400);
+}
+
+// ══════════════════════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════════════════════
+function addTransaction(type,amount,label){
+  const now=new Date(),time=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}),date=now.toLocaleDateString([],{month:'short',day:'numeric'});
+  const entry={type,amount,label:label||null,time,date};state.history.unshift(entry);
+  renderTransaction(entry,true);document.getElementById('history-empty').style.display='none';
+}
+function renderTransaction(entry,animate){
+  const list=document.getElementById('history-list'),row=document.createElement('div');
+  row.className='tx-row';if(!animate)row.style.animation='none';
+  const label=entry.label||(entry.type==='earn'?'Earned':'Spent');
+  const amtStr=entry.amount?`${(entry.type==='spend'||entry.type==='purchase')?'−':'+'}${entry.amount} SDC`:'';
+  row.innerHTML=`<div class="tx-dot ${entry.type}"></div><div class="tx-info"><div class="tx-label">${label}</div><div class="tx-time">${entry.date} · ${entry.time}</div></div><div class="tx-amount ${entry.type}">${amtStr}</div>`;
+  list.insertBefore(row,list.firstChild);
+}
+function renderAllHistory(){
+  const list=document.getElementById('history-list');list.querySelectorAll('.tx-row').forEach(r=>r.remove());
+  if(!state.history.length){document.getElementById('history-empty').style.display='';return;}
+  document.getElementById('history-empty').style.display='none';
+  for(const entry of state.history)renderTransaction(entry,false);
+}
+function clearHistory(){state.history=[];saveState();document.getElementById('history-list').querySelectorAll('.tx-row').forEach(r=>r.remove());document.getElementById('history-empty').style.display='';}
+
+// ══════════════════════════════════════════════════════════
+// EARN / SPEND
+// ══════════════════════════════════════════════════════════
+function earn(){
+  const prevLevel=getCurrentLevel(state.xp),boosted=Date.now()<boostEndTime,amount=boosted?20:10;
+  let xpGain=amount;
+  if(state.spinXpBoostLeft>0){xpGain*=2;state.spinXpBoostLeft--;updateSpinXPBanner();}
+  const lvl=getCurrentLevel(state.xp);if(lvl>=8)xpGain+=2;
+  state.coins+=amount;state.xp+=xpGain;state.totalEarned+=amount;state.earnCount++;state.dailyEarned+=amount;
+  // Mission tracking
+  state.missions.daily.progress.earn5=Math.min(5,(state.missions.daily.progress.earn5||0)+1);
+  state.missions.weekly.progress.earn500=Math.min(500,(state.missions.weekly.progress.earn500||0)+amount);
+  updateBalance('earn');addTransaction('earn',amount,boosted?'Earned (2× Boost)':null);
+  vaultPush({type:'earn',amount,label:boosted?'Earned (2× Boost)':'Earned'});
+  updateLevelUI(prevLevel);updateGoal();updateStats();triggerParticles('earn');
+  const today=todayKey();
+  if(state.lastStreakDay!==today){const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);const yd=yesterday.toISOString().slice(0,10);state.streak=(state.lastStreakDay===yd)?state.streak+1:1;state.lastStreakDay=today;updateStats();}
+  saveState();renderMissions();
+  if(state.earnCount===1)    unlockAchievement('first_earn');
+  if(state.totalEarned>=100) unlockAchievement('century');
+  if(state.totalEarned>=1000)unlockAchievement('whale');
+  if(state.earnCount>=25)    unlockAchievement('grinder');
+  if(state.coins>=500)       unlockAchievement('saver');
+}
+function spend(){
+  if(state.coins<10){showToast('Not enough SDC!','red');return;}
+  state.coins-=10;state.totalSpent+=10;
+  state.missions.daily.progress.spend1=Math.min(1,(state.missions.daily.progress.spend1||0)+1);
+  updateBalance('spend');addTransaction('spend',10,null);vaultPush({type:'spend',amount:10,label:'Spent'});
+  updateStats();triggerParticles('spend');saveState();renderMissions();unlockAchievement('first_spend');
+}
+
+// ══════════════════════════════════════════════════════════
+// LIVE PRICE TICKER
+// ══════════════════════════════════════════════════════════
+(function() {
+  const BASE_PRICE = 0.004217;
+  const HISTORY_LEN = 60;
+  let priceHistory = [];
+  let openPrice = BASE_PRICE;
+  let currentPrice = BASE_PRICE;
+  let high24 = BASE_PRICE, low24 = BASE_PRICE;
+  let volume = 8_420_000 + Math.floor(Math.random() * 2_000_000);
+  let trend = 0; // drift bias
+
+  // Seed history with realistic walk
+  let seed = BASE_PRICE;
+  for (let i = 0; i < HISTORY_LEN; i++) {
+    seed += seed * (Math.random() * 0.03 - 0.015);
+    seed = Math.max(0.0001, seed);
+    priceHistory.push(seed);
+  }
+  openPrice = priceHistory[0];
+  high24 = Math.max(...priceHistory);
+  low24  = Math.min(...priceHistory);
+  currentPrice = priceHistory[priceHistory.length - 1];
+
+  function fmt(p) {
+    if (p < 0.001) return '$' + p.toFixed(7);
+    if (p < 0.01)  return '$' + p.toFixed(6);
+    if (p < 1)     return '$' + p.toFixed(5);
+    return '$' + p.toFixed(4);
+  }
+  function fmtVol(v) {
+    if (v >= 1e6) return (v/1e6).toFixed(2) + 'M';
+    if (v >= 1e3) return (v/1e3).toFixed(1) + 'K';
+    return v.toFixed(0);
+  }
+
+  function drawSparkline() {
+    const canvas = document.getElementById('sparkline-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const pts = priceHistory.slice(-40);
+    const mn = Math.min(...pts), mx = Math.max(...pts);
+    const range = mx - mn || 0.0001;
+    const isUp = currentPrice >= openPrice;
+    const color = isUp ? '#22c55e' : '#e05555';
+
+    const xs = pts.map((_, i) => (i / (pts.length - 1)) * W);
+    const ys = pts.map(p => H - ((p - mn) / range) * (H - 6) - 3);
+
+    // gradient fill
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, isUp ? 'rgba(34,197,94,0.35)' : 'rgba(224,85,85,0.35)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.moveTo(xs[0], H);
+    xs.forEach((x, i) => ctx.lineTo(x, ys[i]));
+    ctx.lineTo(xs[xs.length - 1], H);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // line
+    ctx.beginPath();
+    xs.forEach((x, i) => i === 0 ? ctx.moveTo(x, ys[i]) : ctx.lineTo(x, ys[i]));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // end dot
+    ctx.beginPath();
+    ctx.arc(xs[xs.length-1], ys[ys.length-1], 3, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  function updateTicker() {
+    // Realistic random walk with mean reversion
+    trend += (Math.random() - 0.502) * 0.002;
+    trend *= 0.95;
+    const pctMove = trend + (Math.random() - 0.5) * 0.018;
+    currentPrice = Math.max(0.00001, currentPrice * (1 + pctMove));
+    priceHistory.push(currentPrice);
+    if (priceHistory.length > HISTORY_LEN) priceHistory.shift();
+
+    if (currentPrice > high24) high24 = currentPrice;
+    if (currentPrice < low24)  low24  = currentPrice;
+    volume += Math.floor(Math.random() * 12000 - 3000);
+    volume = Math.max(100000, volume);
+
+    const pctChange = ((currentPrice - openPrice) / openPrice) * 100;
+    const isUp = pctChange >= 0;
+    const sign = isUp ? '+' : '';
+
+    const priceEl  = document.getElementById('ticker-price');
+    const changeEl = document.getElementById('ticker-change');
+    const highEl   = document.getElementById('ticker-high');
+    const lowEl    = document.getElementById('ticker-low');
+    const volEl    = document.getElementById('ticker-vol');
+    if (!priceEl) return;
+
+    priceEl.textContent = fmt(currentPrice);
+    changeEl.textContent = `${sign}${pctChange.toFixed(2)}%`;
+    changeEl.className = 'price-change ' + (isUp ? 'up' : 'down');
+    highEl.textContent = fmt(high24);
+    lowEl.textContent  = fmt(low24);
+    volEl.textContent  = fmtVol(volume);
+    drawSparkline();
+  }
+
+  // Init and start interval
+  window.initTicker = function() { updateTicker(); setInterval(updateTicker, 3500); };
+})();
+
+// ══════════════════════════════════════════════════════════
+// LOGIN STREAK SYSTEM
+// ══════════════════════════════════════════════════════════
+const STREAK_MILESTONES = [
+  { id:'s3',  days:3,  icon:'🌟', name:'3-Day Streak',    bonus:30,  label:'Showing up counts!' },
+  { id:'s7',  days:7,  icon:'🔥', name:'Week Warrior',    bonus:100, label:'One full week!' },
+  { id:'s14', days:14, icon:'💎', name:'Fortnight',       bonus:250, label:'Two weeks strong!' },
+  { id:'s30', days:30, icon:'👑', name:'Month Master',    bonus:750, label:'30 days — legendary!' },
+  { id:'s60', days:60, icon:'☠️', name:'Shadow Legend',   bonus:2000,label:'Two months of dedication!' },
+];
+function getDailyLoginBonus(streak) {
+  if (streak>=30) return 75;
+  if (streak>=14) return 50;
+  if (streak>=7)  return 35;
+  if (streak>=3)  return 20;
+  return 10;
+}
+function processLoginStreak() {
+  const today=todayKey();
+  if (state.lastLoginDate===today) return; // already processed today
+  const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yd=yesterday.toISOString().slice(0,10);
+  if (state.lastLoginDate===yd) {
+    state.loginStreak=(state.loginStreak||0)+1;
+  } else if (state.lastLoginDate==='') {
+    state.loginStreak=1; // first ever login
+  } else {
+    state.loginStreak=1; // streak broken
+  }
+  state.lastLoginDate=today;
+  state.loginBonusClaimed=false;
+  if (!state.loginDates) state.loginDates=[];
+  if (!state.loginDates.includes(today)) state.loginDates.push(today);
+  if (state.loginDates.length>60) state.loginDates=state.loginDates.slice(-60);
+  if (state.loginStreak>(state.bestLoginStreak||0)) state.bestLoginStreak=state.loginStreak;
+  saveState();
+}
+function claimLoginBonus() {
+  if (state.loginBonusClaimed) return;
+  const bonus=getDailyLoginBonus(state.loginStreak);
+  const prevLevel=getCurrentLevel(state.xp);
+  state.coins+=bonus; state.totalEarned+=bonus; state.xp+=bonus; state.dailyEarned+=bonus;
+  state.loginBonusClaimed=true;
+  updateBalance('earn'); updateStats(); updateLevelUI(prevLevel); updateGoal();
+  addTransaction('earn', bonus, `🔥 Day-${state.loginStreak} Login Bonus`);
+  vaultPush({type:'earn', amount:bonus, label:`Login Streak Bonus (Day ${state.loginStreak})`});
+  triggerParticles('earn'); saveState(); renderStreakCard();
+  showToast(`🔥 Day ${state.loginStreak} login bonus! +${bonus} SDC`, 'green');
+}
+function claimStreakMilestone(id) {
+  if (state.streakMilestones[id]) return;
+  const ms=STREAK_MILESTONES.find(m=>m.id===id); if (!ms) return;
+  if (state.loginStreak<ms.days) return;
+  const prevLevel=getCurrentLevel(state.xp);
+  state.coins+=ms.bonus; state.totalEarned+=ms.bonus; state.xp+=ms.bonus;
+  state.streakMilestones[id]=true;
+  updateBalance('earn'); updateStats(); updateLevelUI(prevLevel);
+  addTransaction('earn', ms.bonus, `${ms.icon} Milestone: ${ms.name}`);
+  vaultPush({type:'mission', amount:ms.bonus, label:`Streak Milestone: ${ms.name}`});
+  triggerLevelUpParticles(); saveState(); renderStreakCard();
+  showToast(`${ms.icon} ${ms.name} unlocked! +${ms.bonus} SDC`, 'green');
+}
+function renderStreakCard() {
+  const s=state.loginStreak||0, best=state.bestLoginStreak||0;
+  // hero numbers
+  document.getElementById('streak-display-num').textContent=s;
+  document.getElementById('streak-flame-icon').textContent=s>=30?'☠️':s>=14?'👑':s>=7?'💎':s>=3?'🔥':'🌱';
+  document.getElementById('streak-best-label').textContent=best>0?`Best: ${best} days`:'';
+  // claim button
+  const bonus=getDailyLoginBonus(s);
+  const btn=document.getElementById('btn-claim-login');
+  const note=document.getElementById('streak-claimed-note');
+  if (state.loginBonusClaimed) {
+    btn.disabled=true; btn.textContent=`✓ Claimed (+${bonus} SDC)`;
+    note.classList.remove('hidden');
+  } else {
+    btn.disabled=false; btn.textContent=`🎁 Claim Day ${s} Bonus (+${bonus} SDC)`;
+    note.classList.add('hidden');
+  }
+  // 14-day calendar
+  const cal=document.getElementById('streak-calendar'); cal.innerHTML='';
+  const days=['M','T','W','T','F','S','S'];
+  for (let i=13;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const dKey=d.toISOString().slice(0,10);
+    const isToday=i===0, hasLogin=(state.loginDates||[]).includes(dKey);
+    const dotClass=isToday?(hasLogin?'today':'today'):hasLogin?'active':'missed';
+    const dayName=days[d.getDay()===0?6:d.getDay()-1];
+    const dayNum=d.getDate();
+    const cell=document.createElement('div'); cell.className='streak-day';
+    cell.innerHTML=`<div class="streak-day-dot ${dotClass}">${hasLogin||isToday?'✓':'✗'}</div><div class="streak-day-lbl">${dayName}${dayNum}</div>`;
+    cal.appendChild(cell);
+  }
+  // milestones
+  const msCont=document.getElementById('streak-milestones'); msCont.innerHTML='';
+  for (const ms of STREAK_MILESTONES) {
+    const collected=!!state.streakMilestones[ms.id];
+    const reached=s>=ms.days && !collected;
+    const pct=Math.min(100,Math.round((s/ms.days)*100));
+    const div=document.createElement('div');
+    div.className='streak-milestone'+(collected?' collected':reached?' reached':'');
+    div.innerHTML=`
+      <div class="milestone-icon">${ms.icon}</div>
+      <div class="milestone-body">
+        <div class="milestone-name">${ms.name}</div>
+        <div class="milestone-req">${ms.days}-day streak · ${ms.label}</div>
+        <div class="milestone-reward">+${ms.bonus} SDC reward</div>
+        ${!collected?`<div class="milestone-progress-bar-wrap"><div class="milestone-progress-bar" style="width:${pct}%"></div></div>`:''}
+      </div>
+      ${reached?`<button class="btn-claim-milestone" onclick="claimStreakMilestone('${ms.id}')">Claim!</button>`:''}
+      ${collected?`<div class="milestone-collected-badge">✅ Done</div>`:''}
+    `;
+    msCont.appendChild(div);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// FRIENDS & GIFTS
+// ══════════════════════════════════════════════════════════
+
+// ── Tab switch ──
+let activeFGTab='friends';
+function switchFGTab(tab,el) {
+  activeFGTab=tab;
+  document.querySelectorAll('.fg-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.fg-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('fg-'+tab).classList.add('active');
+  if (tab==='send') renderSentGifts();
+}
+
+// ── FRIENDS ──
+let friendMsgTimer=null;
+function showFriendMsg(msg,type) {
+  const el=document.getElementById('friend-msg');
+  el.textContent=msg; el.className=`fg-msg ${type}`; el.classList.remove('hidden');
+  clearTimeout(friendMsgTimer); friendMsgTimer=setTimeout(()=>el.classList.add('hidden'),3000);
+}
+function addFriend() {
+  const raw=document.getElementById('friend-code-input').value.trim().toUpperCase();
+  const code=raw.startsWith('SDC-')?raw:'SDC-'+raw;
+  if (!raw) { showFriendMsg('Enter a referral code.','err'); return; }
+  if (code===state.referralCode) { showFriendMsg("That's your own code!","err"); return; }
+  if (state.friends.includes(code)) { showFriendMsg('Friend already added.','err'); return; }
+  if (!/^SDC-[A-Z0-9]{6}$/.test(code)) { showFriendMsg('Invalid code format (SDC-XXXXXX).','err'); return; }
+  state.friends.push(code);
+  document.getElementById('friend-code-input').value='';
+  saveState(); renderFriends(); showFriendMsg(`✓ ${code} added!`,'ok');
+  unlockAchievement('friend_added');
+}
+function removeFriend(code) {
+  state.friends=state.friends.filter(c=>c!==code);
+  saveState(); renderFriends();
+}
+function renderFriends() {
+  const list=document.getElementById('friends-list');
+  list.querySelectorAll('.friend-card').forEach(c=>c.remove());
+  const empty=document.getElementById('friends-empty');
+  if (!state.friends.length) { empty.style.display=''; return; }
+  empty.style.display='none';
+  const lb=loadLeaderboard();
+  for (const code of state.friends) {
+    const entry=lb.find(e=>genCode(e.name)===code)||null;
+    const card=document.createElement('div');
+    const myEarned=state.totalEarned, theirEarned=entry?entry.totalEarned:null;
+    let challengeClass='', challengeText='';
+    if (theirEarned!==null) {
+      if (myEarned>theirEarned) { challengeClass='win'; challengeText=`🏆 You're ahead by ${fmtXP(myEarned-theirEarned)} SDC!`; }
+      else if (myEarned<theirEarned) { challengeClass='lose'; challengeText=`📈 Behind by ${fmtXP(theirEarned-myEarned)} SDC — keep grinding!`; }
+      else { challengeClass='tie'; challengeText='🤝 Tied! It\'s neck and neck.'; }
+    }
+    card.className='friend-card'+(challengeClass==='win'?' challenge-winning':challengeClass==='lose'?' challenge-losing':'');
+    const avatarHtml=entry?.picture
+      ?`<div class="friend-avatar"><img src="${entry.picture}" alt=""/></div>`
+      :`<div class="friend-avatar">${entry?entry.name[0].toUpperCase():'?'}</div>`;
+    card.innerHTML=`
+      ${avatarHtml}
+      <div class="friend-body">
+        <div class="friend-name">${entry?entry.name:'Unknown Player'}</div>
+        <div class="friend-code">${code}</div>
+        ${entry?`<div class="friend-stats">
+          <span class="friend-stat">LVL <strong>${entry.level}</strong></span>
+          <span class="friend-stat">Earned <strong>${fmtXP(entry.totalEarned)} SDC</strong></span>
+          <span class="friend-stat">Balance <strong>${fmtXP(entry.coins)} SDC</strong></span>
+        </div>
+        ${challengeText?`<div class="friend-challenge ${challengeClass}">${challengeText}</div>`:''}
+        `:`<div class="friend-stats"><span class="friend-stat" style="color:#555">Not on leaderboard yet — ask them to submit their score!</span></div>`}
+      </div>
+      <button class="btn-remove-friend" onclick="removeFriend('${code}')">✕</button>
+    `;
+    list.appendChild(card);
+  }
+}
+
+// ── GIFT CODES ──
+const GIFT_MAGIC=0x5A3C;
+function generateGiftCode(amount) {
+  const rand=Math.random().toString(36).slice(2,8).toUpperCase().replace(/[^A-Z0-9]/g,'').padEnd(6,'X').slice(0,6);
+  const amtEnc=(amount^GIFT_MAGIC).toString(16).toUpperCase().padStart(4,'0');
+  let check=0; for (const c of amtEnc+rand) check=(check*31+c.charCodeAt(0))&0xFF;
+  return `GFT-${amtEnc}-${rand}-${check.toString(16).toUpperCase().padStart(2,'0')}`;
+}
+function decodeGiftCode(code) {
+  const parts=code.trim().toUpperCase().replace(/\s/g,'').split('-');
+  if (parts.length!==4||parts[0]!=='GFT') return null;
+  const [,amtEnc,rand,checkStr]=parts;
+  if (amtEnc.length!==4||rand.length!==6) return null;
+  let check=0; for (const c of amtEnc+rand) check=(check*31+c.charCodeAt(0))&0xFF;
+  if (check.toString(16).toUpperCase().padStart(2,'0')!==checkStr) return null;
+  const amount=parseInt(amtEnc,16)^GIFT_MAGIC;
+  if (!Number.isFinite(amount)||amount<1||amount>50000) return null;
+  return amount;
+}
+
+let selectedGiftAmount=null;
+let lastGiftCode='';
+function selectGiftPreset(amt,el) {
+  selectedGiftAmount=amt;
+  document.getElementById('gift-amount-input').value=amt;
+  document.querySelectorAll('.gift-preset').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function clearGiftPresets() {
+  selectedGiftAmount=null;
+  document.querySelectorAll('.gift-preset').forEach(p=>p.classList.remove('selected'));
+}
+function showGiftSendMsg(msg,type) {
+  const el=document.getElementById('gift-send-msg');
+  el.textContent=msg; el.className=`fg-msg ${type}`; el.classList.remove('hidden');
+  setTimeout(()=>el.classList.add('hidden'),3500);
+}
+function createGift() {
+  const rawAmt=parseInt(document.getElementById('gift-amount-input').value)||selectedGiftAmount;
+  if (!rawAmt||rawAmt<1) { showGiftSendMsg('Enter an amount to gift.','err'); return; }
+  if (rawAmt>50000) { showGiftSendMsg('Maximum gift is 50,000 SDC.','err'); return; }
+  if (state.coins<rawAmt) { showGiftSendMsg(`Not enough SDC! You have ${state.coins} SDC.`,'err'); return; }
+  // Deduct immediately
+  state.coins-=rawAmt; state.totalSpent+=rawAmt;
+  const code=generateGiftCode(rawAmt);
+  const now=new Date();
+  const giftEntry={ code, amount:rawAmt, createdAt:now.toLocaleDateString([],{month:'short',day:'numeric'})+' '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), redeemed:false };
+  state.sentGifts.unshift(giftEntry);
+  lastGiftCode=code;
+  addTransaction('purchase',rawAmt,`🎁 Gift sent (${rawAmt} SDC)`);
+  vaultPush({type:'purchase',amount:rawAmt,label:`Gift Sent: ${code}`});
+  updateBalance('spend'); updateStats(); saveState(); unlockAchievement('gifter');
+  // Show result
+  document.getElementById('gift-send-form-wrap').classList.add('hidden');
+  document.getElementById('gift-code-value').textContent=code;
+  document.getElementById('gift-code-result').classList.remove('hidden');
+  renderSentGifts();
+}
+function copyGiftCode() {
+  navigator.clipboard.writeText(lastGiftCode).catch(()=>{});
+  showToast('Gift code copied! Share it with your friend 🎁','green');
+}
+function resetGiftForm() {
+  document.getElementById('gift-send-form-wrap').classList.remove('hidden');
+  document.getElementById('gift-code-result').classList.add('hidden');
+  document.getElementById('gift-amount-input').value='';
+  document.getElementById('gift-send-msg').classList.add('hidden');
+  clearGiftPresets(); lastGiftCode='';
+}
+function renderSentGifts() {
+  const wrap=document.getElementById('sent-gift-history-wrap');
+  const list=document.getElementById('sent-gift-list'); list.innerHTML='';
+  if (!state.sentGifts.length) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  for (const g of state.sentGifts.slice(0,10)) {
+    const row=document.createElement('div'); row.className='gift-hist-row';
+    row.innerHTML=`<span class="gift-hist-code">${g.code}</span><span class="gift-hist-amount">−${g.amount} SDC</span><span class="gift-hist-status ${g.redeemed?'redeemed':'active'}">${g.redeemed?'Redeemed':'Active'}</span>`;
+    list.appendChild(row);
+  }
+}
+function redeemGift() {
+  const raw=document.getElementById('gift-receive-input').value.trim();
+  const msgEl=document.getElementById('gift-receive-msg');
+  const show=(msg,type)=>{ msgEl.textContent=msg; msgEl.className=`fg-msg ${type}`; msgEl.classList.remove('hidden'); setTimeout(()=>msgEl.classList.add('hidden'),3500); };
+  if (!raw) { show('Paste a gift code first.','err'); return; }
+  // Check already redeemed by this user
+  if (state.redeemedGifts.includes(raw.toUpperCase().trim())) { show('You already claimed this gift code!','err'); return; }
+  // Check if this was sent by this user (can't redeem own gift)
+  const ownGift=state.sentGifts.find(g=>g.code===raw.toUpperCase().trim());
+  if (ownGift) { show("You can't redeem your own gift code!","err"); return; }
+  const amount=decodeGiftCode(raw);
+  if (amount===null) { show('Invalid or tampered gift code. Please check and try again.','err'); return; }
+  // Valid — award SDC
+  const prevLevel=getCurrentLevel(state.xp);
+  state.coins+=amount; state.totalEarned+=amount; state.xp+=amount; state.dailyEarned+=amount;
+  const code=raw.toUpperCase().trim();
+  state.redeemedGifts.push(code);
+  // Mark as redeemed in sentGifts if present (same browser)
+  const sent=state.sentGifts.find(g=>g.code===code);
+  if (sent) sent.redeemed=true;
+  document.getElementById('gift-receive-input').value='';
+  addTransaction('referral',amount,`🎁 Gift Received: +${amount} SDC`);
+  vaultPush({type:'referral',amount,label:`Gift Received (${code})`});
+  updateBalance('earn'); updateGoal(); updateStats(); updateLevelUI(prevLevel);
+  saveState(); triggerParticles('earn'); unlockAchievement('gift_received');
+  show(`🎉 +${amount} SDC gifted to you!`,'ok');
+  showToast(`🎁 Gift claimed! +${amount} SDC added to your wallet`,'green');
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+function init(){
+  resetMissionsIfNeeded();
+  document.getElementById('coins').textContent=isOwner()?'∞':state.coins;
+  renderPlayerCard();renderReferralCode();
+  applyTheme(state.activeItems.theme);applyCoinIcon(state.activeItems.icon);
+  updateLevelUI();updateGoal();updateStats();
+  buildShop();buildAchievements();renderAllHistory();renderLeaderboard();
+  updateVaultHint();initYT();
+  processLoginStreak(); renderStreakCard();
+  if (typeof initTicker === 'function') initTicker();
+  drawWheel(spinRotation);updateSpinCooldown();updateSpinXPBanner();
+  renderMissions();
+  if(Date.now()<state.boostCooldownUntil){boostEndTime=0;startBoostCountdown();}
+  initGoogleAuth();
+  document.getElementById('player-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveName();});
+  document.getElementById('referral-input').addEventListener('keydown',e=>{if(e.key==='Enter')redeemCode();});
+  document.getElementById('vault-pin-input').addEventListener('keydown',e=>{if(e.key==='Enter')vaultUnlock();});
+  document.getElementById('vault-new-pin').addEventListener('keydown',e=>{if(e.key==='Enter')changeVaultPin();});
+  document.getElementById('gcid-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveGCID();});
+  document.getElementById('friend-code-input').addEventListener('keydown',e=>{if(e.key==='Enter')addFriend();});
+  document.getElementById('gift-receive-input').addEventListener('keydown',e=>{if(e.key==='Enter')redeemGift();});
+  renderFriends(); renderSentGifts();
+  // Restore admin panel if OWNER is already saved
+  if(isOwner()){
+    const ap=document.getElementById('admin-panel');
+    if(ap) ap.classList.add('visible');
+    renderAdminPanel();
+  }
+}
+init();
+</script>
+</body>
+  </html>
